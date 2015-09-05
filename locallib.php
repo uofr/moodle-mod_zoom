@@ -60,7 +60,7 @@ define('ZOOM_SNS_SSO', 101);
 function zoom_get_user_id() {
     global $USER;
     $service = new mod_zoom_webservice();
-    if (!$service->user_getbyemail($USER->email)) {
+    if (!$service->user_getbyemail($USER->email,'100')) {
         zoom_print_error('user/getbyemail', $service->lasterror);
     }
     return $service->lastresponse->id;
