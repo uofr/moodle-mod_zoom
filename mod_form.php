@@ -157,3 +157,17 @@ class mod_zoom_mod_form extends moodleform_mod {
         return $errors;
     }
 }
+
+class mod_zoom_report_form extends moodleform {
+     public function definition() {
+        $mform = $this->_form;
+
+        // Add the "from" field
+        $mform->addElement('date_selector', 'from', 'From');
+
+        // Add the "to" field
+        $mform->addElement('date_selector', 'to', 'To');
+
+        $mform->addElement('submit', 'submit', 'Go');
+    }
+}

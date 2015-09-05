@@ -51,6 +51,9 @@ define('ZOOM_SNS_GOOGLE', 1);
 define('ZOOM_SNS_API', 99);
 define('ZOOM_SNS_ZOOM', 100);
 define('ZOOM_SNS_SSO', 101);
+// Number of meetings per page from zoom's get user report.
+define('ZOOM_DEFAULT_RECORDS_PER_CALL', 30);
+define('ZOOM_MAX_RECORDS_PER_CALL', 300);
 
 /**
  * Get the Zoom id of the currently logged-in user.
@@ -128,4 +131,52 @@ function zoom_get_state($zoom) {
     $finished = $zoom->type != ZOOM_RECURRING_MEETING && $now > $lastavailable;
 
     return array($inprogress, $available, $finished);
+}
+
+/**
+ * Get the user report for display and caching.
+ *
+ * @param stdClass $zoom
+ * @param string $from same format as webservice->get_user_report
+ * @param string $to
+ * @return class->sessions[hostid][meetingid][starttime]
+ *              ->reqfrom string same as param
+ *              ->reqto string same as param
+ *              ->resfrom array string "from" field of zoom response
+ */
+function zoom_get_sessions_for_display($zoom, $from, $to) {
+
+    $service = new mod_zoom_webservice();
+    $return = new stdClass();
+
+    // If the from or to fields change, report.php will issue a new request.
+    $return->reqfrom = $from;
+    $return->reqto = $to;
+
+    $hostsessions = array();
+
+    if ($service->get_user_report($zoom->host_id, $from, $to, ZOOM_MAX_RECORDS_PER_CALL, 1)) {
+        $result = $service->lastresponse;
+
+        // Zoom may return multiple pages of results.
+        $numpages = $result->page_count;
+        $i = $result->page_number;
+        do {
+            foreach ($result->meetings as $meet) {
+
+                $starttime = strtotime($meet->start_time);
+                $hostsessions[$meet->id][$starttime] = $meet;
+            }
+
+            $i++;
+        } while ($i <= $numpages && $result =
+                $service->get_user_report($zoom->host_id, $from, $to, ZOOM_MAX_RECORDS_PER_CALL, $i));
+
+        // If the time period is longer than a month, Zoom will only return the latest month in range.
+        // Return the response "from" field to check.
+        $return->resfrom = sscanf($result->from, '%u-%u-%u');
+    }
+
+    $return->sessions = $hostsessions;
+    return $return;
 }

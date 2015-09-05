@@ -51,6 +51,8 @@ $strtype = get_string('type', 'mod_zoom');
 $strtime = get_string('meeting_time', 'mod_zoom');
 $strduration = get_string('duration', 'mod_zoom');
 $stractions = get_string('actions', 'mod_zoom');
+$strsessions = get_string('sessions', 'mod_zoom');
+
 $strmeetingstarted = get_string('meeting_started', 'mod_zoom');
 $strstart = get_string('start', 'mod_zoom');
 $strjoin = get_string('join', 'mod_zoom');
@@ -84,13 +86,12 @@ if (!($zoomuserid = $cache->get($USER->id))) {
 $newtable = new html_table();
 $newtable->attributes['class'] = 'generaltable mod_index';
 
-$newhead = array($strtopic, $strtime, $strduration, $stractions);
-$newalign = array('left', 'left', 'left', 'left');
+$newhead = array($strtopic, $strtime, $strduration, $stractions, $strsessions);
+$newalign = array('left', 'left', 'left', 'left', 'left');
 
 $oldtable = new html_table();
-$oldhead = array($strtopic, $strtime);
-$oldalign = array('left', 'left');
-// TODO: Add recordings here when they are ready.
+$oldhead = array($strtopic, $strtime, $strsessions);
+$oldalign = array('left', 'left', 'left');
 
 if ($usesections) {
     $strsectionname = get_string('sectionname', 'format_'.$course->format);
@@ -123,8 +124,12 @@ foreach ($zooms as $z) {
     $displaytime = ($z->type == ZOOM_RECURRING_MEETING) ?
             get_string('recurringmeetinglong', 'mod_zoom') : userdate($z->start_time);
 
+    $report = new moodle_url('report.php', array('id' => $id, 'mid' => $z->id));
+    $sessions = html_writer::link($report, $strsessions);
+
     if ($finished) {
         $row[2] = $displaytime;
+        $row[4] = $sessions;
         $oldtable->data[] = $row;
     } else {
         if ($inprogress) {
@@ -154,6 +159,7 @@ foreach ($zooms as $z) {
             $row[4] = '--';
         }
 
+        $row[] = $sessions;
         $newtable->data[] = $row;
     }
 }

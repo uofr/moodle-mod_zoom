@@ -138,7 +138,11 @@ $title->header = true;
 $title->colspan = $numcolumns;
 $table->data[] = array($title);
 
-
+$sessionsurl = new moodle_url('/mod/zoom/report.php', array('id' => $course->id, 'mid' => $zoom->id));
+$sessionslink = html_writer::link($sessionsurl, get_string('sessions', 'mod_zoom'));
+$sessions = new html_table_cell($sessionslink);
+$sessions->colspan = $numcolumns;
+$table->data[] = array($sessions);
 
 if ($zoom->type == ZOOM_RECURRING_MEETING) {
     $recurringmessage = new html_table_cell(get_string('recurringmeetinglong', 'mod_zoom'));
