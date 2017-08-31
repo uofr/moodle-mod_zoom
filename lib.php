@@ -564,6 +564,7 @@ function zoom_print_error($apicall, $error, $cmid = -1) {
                     // Assume user is using Zoom for the first time.
                     $errstring = 'zoomerr_usernotfound';
                     $param = get_config('mod_zoom', 'zoomurl');
+					if (empty($param)) $param = 'https://zoom.us'; 
                     // Not an error.
                     $style = 'notifymessage';
                     // After they set up their account, the user should
