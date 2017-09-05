@@ -3,3 +3,16 @@
     color: #FFF;
     border-radius: 0.25em;
 }
+
+.zoom-meeting-status {
+	text-align: center;
+}
+
+#page-mod-zoom-view .generaltable.mod_view td.cell.c0 {
+	text-align: right;
+}
+
+#page-mod-zoom-view .generaltable.mod_view td.cell.c0.lastcol {
+	text-align: center;
+	font-weight: bold;
+}

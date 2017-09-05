@@ -105,7 +105,7 @@ if ($zoom->intro) {
 $table = new html_table();
 $table->attributes['class'] = 'generaltable mod_view';
 
-$table->align = array('center', 'left');
+$table->align = array('', 'left');
 $numcolumns = 2;
 
 list($inprogress, $available, $finished) = zoom_get_state($zoom);
@@ -123,19 +123,39 @@ if ($available) {
     $buttonhtml .= html_writer::input_hidden_params($aurl);
     $link = html_writer::tag('form', $buttonhtml, array('action' => $aurl->out_omit_querystring(), 'target' => '_blank'));
 } else {
-    $link = html_writer::tag('span', $strunavailable, array('style' => 'font-size:20px'));
+	
+	if (!$zoom->recurring) {
+	    if ($zoom->status == ZOOM_MEETING_EXPIRED) {
+	        $status = get_string('meeting_expired_lng', 'mod_zoom');
+			$statusclass = 'default';
+	    } else if ($finished) {
+	        $status = get_string('meeting_finished_lng', 'mod_zoom');
+			$statusclass = 'info';
+	    } else if ($inprogress) {
+	        $status = get_string('meeting_started_lng', 'mod_zoom');
+			$statusclass = 'success';
+	    } else {
+	        $status = get_string('meeting_not_started_lng', 'mod_zoom');
+			$statusclass = 'warning';
+	    }
+		$link = html_writer::tag('div', $status, array('class'=>'span12 zoom-meeting-status alert alert-'.$statusclass,'style' => 'font-size:20px'));
+	    
+	} else $link = html_writer::tag('div', $strunavailable, array('class'=>'span12 alert alert-info','style' => 'font-size:20px'));
 }
-
+/*
 $title = new html_table_cell($link);
 $title->header = true;
 $title->colspan = $numcolumns;
 $table->data[] = array($title);
+*/
+
+echo '<div class="row-fluid">'.$link.'</div>';
 
 // Only show sessions link to users with edit capability.
 if ($iszoommanager) {
     $sessionsurl = new moodle_url('/mod/zoom/report.php', array('id' => $cm->id));
-    $sessionslink = html_writer::link($sessionsurl, get_string('sessions', 'mod_zoom'));
-    $sessions = new html_table_cell($sessionslink);
+    $sessionslink = html_writer::link($sessionsurl, get_string('list_sessions', 'mod_zoom'));
+    $sessions = new html_table_cell($sessionslink,array('style'=>'text-align: center'));
     $sessions->colspan = $numcolumns;
     $table->data[] = array($sessions);
 }

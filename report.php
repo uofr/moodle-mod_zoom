@@ -123,6 +123,7 @@ if (!empty($todisplay)) {
     }
 }
 
+if (empty($table->data)) echo $OUTPUT->notification(get_string('nosessions', 'mod_zoom'), 'notifymessage');
 
 $dateform = new mod_zoom_report_form('report.php?id='.$cm->id);
 $dateform->set_data(array('from' => $from, 'to' => $to));
@@ -130,8 +131,6 @@ echo $dateform->render();
 
 if (!empty($table->data)) {
     echo html_writer::table($table);
-} else {
-    echo $OUTPUT->notification(get_string('nosessions', 'mod_zoom'), 'notifymessage');
 }
 
 echo $OUTPUT->footer();

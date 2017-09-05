@@ -26,7 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['actions'] = 'Actions';
-$string['allmeetings'] = 'All meetings';
+$string['allmeetings'] = 'View all meetings';
 $string['apikey'] = 'Zoom API key';
 $string['apikey_desc'] = '';
 $string['apisecret'] = 'Zoom API secret';
@@ -58,6 +58,7 @@ $string['join_link'] = 'Join link';
 $string['join_meeting'] = 'Join Meeting';
 $string['jointime'] = 'Join Time';
 $string['leavetime'] = 'Leave Time';
+$string['list_sessions'] = 'List sessions';
 $string['login_api'] = 'API';
 $string['login_facebook'] = 'Facebook';
 $string['login_google'] = 'Google';
@@ -68,9 +69,13 @@ $string['logintypesexplain'] = 'Select all login types for user email lookup. Ho
 $string['meeting_expired'] = 'Expired / Deleted';
 $string['meeting_finished'] = 'Finished';
 $string['meeting_not_started'] = 'Not started';
+$string['meeting_expired_lng'] = 'This meeting has expired or been deleted';
+$string['meeting_finished_lng'] = 'This meeting has finished';
+$string['meeting_not_started_lng'] = 'This meeting has not started';
 $string['meetingoptions'] = 'Meeting option';
 $string['meetingoptions_help'] = '*Join before host* allows attendees to join the meeting before the host joins or when the host cannot attend the meeting.';
 $string['meeting_started'] = 'In progress';
+$string['meeting_started_lng'] = 'This meeting is in progress';
 $string['meeting_time'] = 'Start Time';
 $string['modulename'] = 'Zoom meeting';
 $string['modulenameplural'] = 'Zoom Meetings';
