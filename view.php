@@ -105,7 +105,7 @@ if ($zoom->intro) {
 $table = new html_table();
 $table->attributes['class'] = 'generaltable mod_view';
 
-$table->align = array('', 'left');
+$table->align = array('center', 'left');
 $numcolumns = 2;
 
 list($inprogress, $available, $finished) = zoom_get_state($zoom);
