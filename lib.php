@@ -526,7 +526,7 @@ function zoom_extend_settings_navigation(settings_navigation $settingsnav, navig
  * @param int $cmid Optional (used for recreate links). Cmid of the instance that caused the error
  */
 function zoom_print_error($apicall, $error, $cmid = -1) {
-    global $CFG, $COURSE, $OUTPUT, $PAGE;
+    global $CFG, $COURSE, $USER, $OUTPUT, $PAGE;
 
     require_once($CFG->dirroot.'/mod/zoom/locallib.php');
 
@@ -564,7 +564,7 @@ function zoom_print_error($apicall, $error, $cmid = -1) {
                     // Assume user is using Zoom for the first time.
                     $errstring = 'zoomerr_usernotfound';
                     $param = get_config('mod_zoom', 'zoomurl');
-					if (empty($param)) $param = 'https://zoom.us'; 
+										if (empty($param)) $param = array('url'=>'https://zoom.us','email'=>$USER->email); 
                     // Not an error.
                     $style = 'notifymessage';
                     // After they set up their account, the user should

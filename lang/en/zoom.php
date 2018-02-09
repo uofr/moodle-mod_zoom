@@ -125,7 +125,11 @@ $string['zoomerr_apiurl_error'] = 'The Zoom API could not be contacted; please c
 $string['zoomerr_apiurl_unresolved'] = 'The Zoom API url could not be resolved; please check the setting.';
 $string['zoomerr_meetingnotfound'] = 'This meeting has expired. You can <a href="{$a->recreate}">recreate it here</a> or <a href="{$a->delete}">delete it completely</a>.';
 $string['zoomerr_meetingnotfound_info'] = 'This meeting has expired. Please contact the meeting host if you have questions.';
-$string['zoomerr_usernotfound'] = 'You are using Zoom for the first time, so you must enable your Zoom account by logging in to <a href="{$a}" target="_blank">{$a}</a> with your login credentials. Once you\'ve activated your Zoom account, reload this page and continue setting up your meeting.';
+$string['zoomerr_usernotfound'] = '<p>If you already have a Zoom account, but it does not match your UR Courses email address ({$a->email}), please contact <a href="mailto:IT.Support@uregina.ca">IT.Support@uregina.ca</a> and request that your UR Courses profile be updated to use the email address associated with your Zoom account.</p>
+	
+<p>If you are using Zoom for the first time, you must create a Zoom account by visiting <a href="{$a->url}" target="_blank">{$a->url}</a> and signing up with your uregina.ca email address. Once you have a Zoom account that matches the email address used in your UR Courses profile, you will be able to continue setting up your meeting.</p>
+
+<p>If you intend to host Zoom meetings that will be longer than 40 minutes in duration, contact <a href="mailto:IT.Support@uregina.ca">IT.Support@uregina.ca</a> and request that your Zoom account be upgraded to pro.</p>';
 $string['zoomurl'] = 'Zoom home page URL';
 $string['zoomurl_desc'] = '';
 $string['zoom:view'] = 'View Zoom meetings';
