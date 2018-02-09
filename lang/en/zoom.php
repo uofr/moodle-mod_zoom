@@ -127,13 +127,13 @@ $string['zoomerr_meetingnotfound'] = 'This meeting has expired. You can <a href=
 $string['zoomerr_meetingnotfound_info'] = 'This meeting has expired. Please contact the meeting host if you have questions.';
 $string['zoomerr_usernotfound'] = '<h3 style="text-align: left">Zoom Account Configuration Required</h3>
 
-<p style="text-align: left"><b>If you already have a Zoom account</b>, but it does not match your current UR Courses email address (<b>{$a->email}</b>), please contact <a href="mailto:IT.Support@uregina.ca">IT.Support@uregina.ca</a> and request that your UR Courses profile be updated to use the <b><i>uregina.ca</i></b> email address associated with your Zoom account.</p>
+<p style="text-align: left"><b>If you already have a Zoom account</b> associated with your <b><i>uregina.ca</i></b> email address, but it does not match your current UR Courses email address (<b>{$a->email}</b>), please contact <a href="mailto:IT.Support@uregina.ca">IT.Support@uregina.ca</a> and request that your UR Courses profile be updated to use the email address associated with your Zoom account.</p>
 	
 <p style="text-align: left; margin-top: 1em"><b>If you are using Zoom for the first time</b>, you must first create a Zoom account by visiting <a href="{$a->url}" target="_blank">{$a->url}</a> and sign up with your <b><i>uregina.ca</i></b> email address. Once you have a Zoom account that matches the email address used in your UR Courses profile (<b>{$a->email}</b>), you will be able to continue setting up your meeting.</p>
 
 <p style="text-align: left; margin-top: 1em">If you intend to host Zoom meetings that will be longer than 40 minutes, contact <a href="mailto:IT.Support@uregina.ca">IT.Support@uregina.ca</a> and request that your Zoom account be upgraded to pro.</p>
 
-<p style="text-align: left; margin-top: 1em">Additional information on using Zoom is available at <a href="https://urcourses.uregina.ca/guides/instructor/zoom" target="_blank">https://urcourses.uregina.ca/guides/instructor/zoom</a>.</p>';
+<p style="text-align: left; margin-top: 1em">Additional information on using Zoom is available in the UR Courses guides, <a href="https://urcourses.uregina.ca/guides/instructor/zoom" target="_blank">https://urcourses.uregina.ca/guides/instructor/zoom</a>.</p>';
 $string['zoomurl'] = 'Zoom home page URL';
 $string['zoomurl_desc'] = '';
 $string['zoom:view'] = 'View Zoom meetings';
