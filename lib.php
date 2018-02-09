@@ -566,7 +566,7 @@ function zoom_print_error($apicall, $error, $cmid = -1) {
                     $param = get_config('mod_zoom', 'zoomurl');
 										if (empty($param)) $param = array('url'=>'https://zoom.us','email'=>$USER->email); 
                     // Not an error.
-                    $style = 'notifymessage';
+                    $style = 'warning';
                     // After they set up their account, the user should
                     // continue to the page they were on.
                     $nexturl = $PAGE->url;
