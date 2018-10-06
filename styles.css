@@ -4,6 +4,10 @@
     border-radius: 0.25em;
 }
 
+#page-mod-zoom-view a .btn-primary .icon {
+    color: white;
+}
+
 .zoom-meeting-status {
 	text-align: center;
 }
