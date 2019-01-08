@@ -121,16 +121,16 @@ if ($available) {
 	
 	if (!$zoom->recurring) {
 	    if ($zoom->status == ZOOM_MEETING_EXPIRED) {
-	        $status = get_string('meeting_expired_lng', 'mod_zoom');
+	        $status = get_string('meeting_expired', 'mod_zoom');
 			$statusclass = 'default';
 	    } else if ($finished) {
-	        $status = get_string('meeting_finished_lng', 'mod_zoom');
+	        $status = get_string('meeting_finished', 'mod_zoom');
 			$statusclass = 'info';
 	    } else if ($inprogress) {
-	        $status = get_string('meeting_started_lng', 'mod_zoom');
+	        $status = get_string('meeting_started', 'mod_zoom');
 			$statusclass = 'success';
 	    } else {
-	        $status = get_string('meeting_not_started_lng', 'mod_zoom');
+	        $status = get_string('meeting_not_started', 'mod_zoom');
 			$statusclass = 'warning';
 	    }
 		$link = html_writer::tag('div', $status, array('class'=>'span12 zoom-meeting-status alert alert-'.$statusclass,'style' => 'font-size:20px'));
@@ -149,7 +149,7 @@ echo '<div class="row-fluid">'.$link.'</div>';
 if ($iszoommanager) {
     // Only show sessions link to users with edit capability.
     $sessionsurl = new moodle_url('/mod/zoom/report.php', array('id' => $cm->id));
-    $sessionslink = html_writer::link($sessionsurl, get_string('list_sessions', 'mod_zoom'));
+    $sessionslink = html_writer::link($sessionsurl, get_string('sessions', 'mod_zoom'));
     $sessions = new html_table_cell($sessionslink,array('style'=>'text-align: center'));
     $sessions->colspan = $numcolumns;
     $table->data[] = array($sessions);
