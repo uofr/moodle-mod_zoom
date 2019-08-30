@@ -43,12 +43,16 @@ $string['audio_telephony'] = 'Telephony only';
 $string['audio_voip'] = 'VoIP only';
 $string['cachedef_zoomid'] = 'The zoom user id of the user';
 $string['cachedef_sessions'] = 'Information from the zoom get user report request';
+$string['calendardescriptionURL'] = 'Meeting join URL: {$a}.';
+$string['calendardescriptionintro'] = "\nDescription:\n{\$a}";
+$string['calendariconalt'] = 'Calendar icon';
 $string['clickjoin'] = 'Clicked join meeting button';
 $string['connectionok'] = 'Connection working.';
 $string['connectionfailed'] = 'Connection failed: ';
 $string['connectionstatus'] = 'Connection status';
 $string['defaultsettings'] = 'Default Zoom settings';
 $string['defaultsettings_help'] = 'These settings define the defaults for all new Zoom meetings and webinars.';
+$string['downloadical'] = 'Download iCal';
 $string['duration'] = 'Duration (minutes)';
 $string['endtime'] = 'End time';
 $string['err_duration_nonpositive'] = 'The duration must be positive.';
@@ -61,8 +65,6 @@ $string['export'] = 'Export';
 $string['firstjoin'] = 'First able to join';
 $string['firstjoin_desc'] = 'The earliest a user can join a scheduled meeting (minutes before start).';
 $string['getmeetingreports'] = 'Get meeting report from Zoom';
-$string['googlecalendar'] = 'Google Calendar';
-$string['googleiconalt'] = 'Google icon';
 $string['invalid_status'] = 'Status invalid, check the database.';
 $string['join'] = 'Join';
 $string['joinbeforehost'] = 'Join meeting before host';
@@ -70,13 +72,6 @@ $string['join_link'] = 'Join link';
 $string['join_meeting'] = 'Join Meeting';
 $string['jointime'] = 'Join time';
 $string['leavetime'] = 'Leave time';
-$string['login_api'] = 'API';
-$string['login_facebook'] = 'Facebook';
-$string['login_google'] = 'Google';
-$string['login_sso'] = 'Single sign-on';
-$string['login_zoom'] = 'Zoom';
-$string['logintypes'] = 'Login types';
-$string['logintypesexplain'] = 'Select all login types for user email lookup. Hold CTRL key to select multiple fields. (Options are listed in the order that lookup will be attempted)';
 $string['licensesnumber'] = 'Number of licenses';
 $string['redefinelicenses'] = 'Redefine licenses';
 $string['lowlicenses'] = 'If the number of your licenses exceeds those required, then when you create each new activity by the user, it will be assigned a PRO license by lowering the status of another user. The option is effective when the number of active PRO-licenses is more than 5.';
@@ -102,21 +97,20 @@ $string['option_audio'] = 'Audio options';
 $string['option_host_video'] = 'Host video';
 $string['option_jbh'] = 'Enable join before host';
 $string['option_participants_video'] = 'Participants video';
-$string['outlook'] = 'Outlook';
 $string['participants'] = 'Participants';
 $string['password'] = 'Password';
 $string['passwordprotected'] = 'Password Protected';
 $string['pluginadministration'] = 'Manage Zoom meeting';
 $string['pluginname'] = 'Zoom meeting';
-$string['privacy:metadata:mdl_zoom_meeting_details'] = 'The database table that stores information about each meeting instance.';
-$string['privacy:metadata:mdl_zoom_meeting_details:topic'] = 'The name of the meeting that the user attended.';
-$string['privacy:metadata:mdl_zoom_meeting_participants'] = 'The database table that stores information about meeting participants.';
-$string['privacy:metadata:mdl_zoom_meeting_participants:attentiveness_score'] = 'The participant\'s attentiveness score';
-$string['privacy:metadata:mdl_zoom_meeting_participants:duration'] = 'How long the participant was in the meeting';
-$string['privacy:metadata:mdl_zoom_meeting_participants:join_time'] = 'The time that the participant joined the meeting';
-$string['privacy:metadata:mdl_zoom_meeting_participants:leave_time'] = 'The time that the participant left the meeting';
-$string['privacy:metadata:mdl_zoom_meeting_participants:name'] = 'The name of the participant';
-$string['privacy:metadata:mdl_zoom_meeting_participants:user_email'] = 'The email of the participant';
+$string['privacy:metadata:zoom_meeting_details'] = 'The database table that stores information about each meeting instance.';
+$string['privacy:metadata:zoom_meeting_details:topic'] = 'The name of the meeting that the user attended.';
+$string['privacy:metadata:zoom_meeting_participants'] = 'The database table that stores information about meeting participants.';
+$string['privacy:metadata:zoom_meeting_participants:attentiveness_score'] = 'The participant\'s attentiveness score';
+$string['privacy:metadata:zoom_meeting_participants:duration'] = 'How long the participant was in the meeting';
+$string['privacy:metadata:zoom_meeting_participants:join_time'] = 'The time that the participant joined the meeting';
+$string['privacy:metadata:zoom_meeting_participants:leave_time'] = 'The time that the participant left the meeting';
+$string['privacy:metadata:zoom_meeting_participants:name'] = 'The name of the participant';
+$string['privacy:metadata:zoom_meeting_participants:user_email'] = 'The email of the participant';
 $string['recurringmeeting'] = 'Recurring';
 $string['recurringmeeting_help'] = 'Has no end date';
 $string['recurringmeetinglong'] = 'Recurring meeting (meeting with no end date or time)';
@@ -124,6 +118,7 @@ $string['report'] = 'Reports';
 $string['reportapicalls'] = 'Report API calls exhausted';
 $string['requirepassword'] = 'Require meeting password';
 $string['resetapicalls'] = 'Reset the number of available API calls';
+$string['search:activity'] = 'Zoom - activity information';
 $string['sessions'] = 'Sessions';
 $string['start'] = 'Start';
 $string['starthostjoins'] = 'Start video when host joins';
@@ -141,7 +136,6 @@ $string['webinar'] = 'Webinar';
 $string['webinar_help'] = 'This option is only available to pre-authorized Zoom accounts.';
 $string['webinar_already_true'] = '<p><b>This module was already set as a webinar, not meeting. You cannot toggle this setting after creating the webinar.</b></p>';
 $string['webinar_already_false'] = '<p><b>This module was already set as a meeting, not webinar. You cannot toggle this setting after creating the meeting.</b></p>';
-$string['windowsiconalt'] = 'Windows icon';
 $string['zoom:addinstance'] = 'Add a new Zoom meeting';
 $string['zoomerr'] = 'An error occured with Zoom.'; // Generic error.
 $string['zoomerr_apikey_missing'] = 'Zoom API key not found';
@@ -150,15 +144,15 @@ $string['zoomerr_id_missing'] = 'You must specify a course_module ID or an insta
 $string['zoomerr_licensescount_missing'] = 'Zoom utmost setting found but, licensescount setting not found';
 $string['zoomerr_meetingnotfound'] = 'This meeting cannot be found on Zoom. You can <a href="{$a->recreate}">recreate it here</a> or <a href="{$a->delete}">delete it completely</a>.';
 $string['zoomerr_meetingnotfound_info'] = 'This meeting cannot be found on Zoom. Please contact the meeting host if you have questions.';
-$string['zoomerr_usernotfound'] = '<h3 style="text-align: left">Zoom Account Configuration Required</h3>
-
-<p style="text-align: left"><b>If you already have a Zoom account</b> associated with your <b><i>uregina.ca</i></b> email address, but it does not match your current UR Courses email address (<b>{$a->email}</b>), please contact <a href="mailto:IT.Support@uregina.ca">IT.Support@uregina.ca</a> and request that your UR Courses profile be updated to use the email address associated with your Zoom account.</p>
-	
-<p style="text-align: left; margin-top: 1em"><b>If you are using Zoom for the first time</b>, you must first create a Zoom account by visiting <a href="{$a->url}" target="_blank">{$a->url}</a> and sign up with your <b><i>uregina.ca</i></b> email address. Once you have a Zoom account that matches the email address used in your UR Courses profile (<b>{$a->email}</b>), you will be able to continue setting up your meeting.</p>
-
-<p style="text-align: left; margin-top: 1em">If you intend to host Zoom meetings that will be longer than 40 minutes, contact <a href="mailto:IT.Support@uregina.ca">IT.Support@uregina.ca</a> and request that your Zoom account be upgraded to pro.</p>
-
-<p style="text-align: left; margin-top: 1em">Additional information on using Zoom is available in the UR Courses guides, <a href="https://urcourses.uregina.ca/guides/instructor/zoom" target="_blank">https://urcourses.uregina.ca/guides/instructor/zoom</a>.</p>';
+    $string['zoomerr_usernotfound'] = '<h3 style="text-align: left">Zoom Account Configuration Required</h3>
+    
+    <p style="text-align: left"><b>If you already have a Zoom account</b> associated with your <b><i>uregina.ca</i></b> email address, but it does not match your current UR Courses email address (<b>{$a->email}</b>), please contact <a href="mailto:IT.Support@uregina.ca">IT.Support@uregina.ca</a> and request that your UR Courses profile be updated to use the email address associated with your Zoom account.</p>
+    
+    <p style="text-align: left; margin-top: 1em"><b>If you are using Zoom for the first time</b>, you must first create a Zoom account by visiting <a href="{$a->url}" target="_blank">{$a->url}</a> and sign up with your <b><i>uregina.ca</i></b> email address. Once you have a Zoom account that matches the email address used in your UR Courses profile (<b>{$a->email}</b>), you will be able to continue setting up your meeting.</p>
+    
+    <p style="text-align: left; margin-top: 1em">If you intend to host Zoom meetings that will be longer than 40 minutes, contact <a href="mailto:IT.Support@uregina.ca">IT.Support@uregina.ca</a> and request that your Zoom account be upgraded to pro.</p>
+    
+    <p style="text-align: left; margin-top: 1em">Additional information on using Zoom is available in the UR Courses guides, <a href="https://urcourses.uregina.ca/guides/instructor/zoom" target="_blank">https://urcourses.uregina.ca/guides/instructor/zoom</a>.</p>';
 $string['zoomurl'] = 'Zoom home page URL';
 $string['zoomurl_desc'] = '';
 $string['zoom:view'] = 'View Zoom meetings';

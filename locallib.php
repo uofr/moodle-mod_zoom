@@ -42,12 +42,6 @@ define('ZOOM_SCHEDULED_MEETING', 2);
 define('ZOOM_RECURRING_MEETING', 3);
 define('ZOOM_SCHEDULED_WEBINAR', 5);
 define('ZOOM_RECURRING_WEBINAR', 6);
-// Authentication methods.
-define('ZOOM_SNS_FACEBOOK', 0);
-define('ZOOM_SNS_GOOGLE', 1);
-define('ZOOM_SNS_API', 99);
-define('ZOOM_SNS_ZOOM', 100);
-define('ZOOM_SNS_SSO', 101);
 // Number of meetings per page from zoom's get user report.
 define('ZOOM_DEFAULT_RECORDS_PER_CALL', 30);
 define('ZOOM_MAX_RECORDS_PER_CALL', 300);
@@ -188,7 +182,8 @@ function zoom_is_meeting_gone_error($error) {
  * @return bool
  */
 function zoom_is_user_not_found_error($error) {
-    return strpos($error, 'not exist') !== false || strpos($error, 'not belong to this account') !== false;
+    return strpos($error, 'not exist') !== false || strpos($error, 'not belong to this account') !== false
+        || strpos($error, 'not found on this account') !== false;
 }
 
 /**
