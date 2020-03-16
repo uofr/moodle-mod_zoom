@@ -53,7 +53,8 @@ class mod_zoom_mod_form extends moodleform_mod {
             $errstring = 'zoomerr_usernotfound';
             // After they set up their account, the user should continue to the page they were on.
             $nexturl = $PAGE->url;
-            zoom_fatal_error($errstring, 'mod_zoom', $nexturl, $config->zoomurl);
+			$langvars = ['email'=>$USER->email,'url'=>$config->zoomurl];
+            zoom_fatal_error($errstring, 'mod_zoom', $nexturl, $langvars);
         }
 
         // If updating, ensure we can get the meeting on Zoom.
