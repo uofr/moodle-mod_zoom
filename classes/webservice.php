@@ -294,7 +294,7 @@ class mod_zoom_webservice {
         $usertimes = array();
         $userslist = $this->list_users();
         foreach ($userslist as $user) {
-            if ($user->type != ZOOM_USER_TYPE_BASIC && isset($user->last_login_time)) {
+            if ($user->type != ZOOM_USER_TYPE_BASIC && isset($user->last_login_time) && substr($user->department,-5) == '[urc]') {
                 $usertimes[$user->id] = strtotime($user->last_login_time);
             }
         }
