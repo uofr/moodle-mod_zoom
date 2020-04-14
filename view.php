@@ -108,7 +108,7 @@ if ($zoom->intro) {
 $table = new html_table();
 $table->attributes['class'] = 'generaltable mod_view';
 
-$table->align = array('center', 'left');
+$table->align = array('', 'left');
 $numcolumns = 2;
 
 list($inprogress, $available, $finished) = zoom_get_state($zoom);
@@ -121,7 +121,9 @@ if ($available) {
     }
     $aurl = new moodle_url('/mod/zoom/loadmeeting.php', array('id' => $cm->id));
     $buttonhtml .= html_writer::input_hidden_params($aurl);
-    $link = html_writer::tag('form', $buttonhtml, array('action' => $aurl->out_omit_querystring(), 'target' => '_blank'));
+    $linkfrm = html_writer::tag('form', $buttonhtml, array('action' => $aurl->out_omit_querystring(), 'target' => '_blank'));
+
+	$link = html_writer::tag('div', $linkfrm, array('class'=>'zoom-meeting-status alert alert-success','style' => 'font-size:1.25em; font-weight: bold'));
 } else {
 	
 	if (!$zoom->recurring) {
@@ -138,9 +140,9 @@ if ($available) {
 	        $status = get_string('meeting_not_started', 'mod_zoom');
 			$statusclass = 'warning';
 	    }
-		$link = html_writer::tag('div', $status, array('class'=>'span12 zoom-meeting-status alert alert-'.$statusclass,'style' => 'font-size:20px'));
+		$link = html_writer::tag('div', $status, array('class'=>'zoom-meeting-status alert alert-'.$statusclass,'style' => 'font-size:1.25em; font-weight: bold'));
 	    
-	} else $link = html_writer::tag('div', $strunavailable, array('class'=>'span12 alert alert-info','style' => 'font-size:20px'));
+	} else $link = html_writer::tag('div', $strunavailable, array('class'=>'alert alert-info','style' => 'font-size:1.25em; font-weight: bold'));
 }
 /*
 $title = new html_table_cell($link);
@@ -149,7 +151,7 @@ $title->colspan = $numcolumns;
 $table->data[] = array($title);
 */
 
-echo '<div class="row-fluid">'.$link.'</div>';
+echo '<div class="box mt-3">'.$link.'</div>';
 
 if ($iszoommanager) {
     // Only show sessions link to users with edit capability.
@@ -165,21 +167,12 @@ if ($iszoommanager) {
     }
 }
 
-// Generate add-to-calendar button if meeting was found and isn't recurring.
-if (!($showrecreate || $zoom->recurring)) {
-    $icallink = new moodle_url('/mod/zoom/exportical.php', array('id' => $cm->id));
-    $calendaricon = $OUTPUT->pix_icon('i/calendar', get_string('calendariconalt', 'mod_zoom'), 'mod_zoom');
-    $calendarbutton = html_writer::div($calendaricon . ' ' . get_string('downloadical', 'mod_zoom'), 'btn btn-primary');
-    $buttonhtml = html_writer::link((string) $icallink, $calendarbutton, array('target' => '_blank'));
-    $table->data[] = array(get_string('addtocalendar', 'mod_zoom'), $buttonhtml);
-}
-
 if ($zoom->recurring) {
     $recurringmessage = new html_table_cell(get_string('recurringmeetinglong', 'mod_zoom'));
     $recurringmessage->colspan = $numcolumns;
     $table->data[] = array($recurringmessage);
 } else {
-    $table->data[] = array($strtime, userdate($zoom->start_time));
+    $table->data[] = array($strtime, '<b>'.userdate($zoom->start_time).'</b>');
     $table->data[] = array($strduration, format_time($zoom->duration));
 }
 
@@ -222,6 +215,15 @@ if (!$zoom->recurring) {
     }
 
     $table->data[] = array($strstatus, $status);
+}
+
+// Generate add-to-calendar button if meeting was found and isn't recurring.
+if (!($showrecreate || $zoom->recurring)) {
+    $icallink = new moodle_url('/mod/zoom/exportical.php', array('id' => $cm->id));
+    $calendaricon = $OUTPUT->pix_icon('i/calendar', get_string('calendariconalt', 'mod_zoom'), 'mod_zoom');
+    $calendarbutton = html_writer::div($calendaricon . ' ' . get_string('downloadical', 'mod_zoom'), 'btn btn-primary');
+    $buttonhtml = html_writer::link((string) $icallink, $calendarbutton, array('target' => '_blank'));
+    $table->data[] = array(get_string('addtocalendar', 'mod_zoom'), $buttonhtml);
 }
 
 $urlall = new moodle_url('/mod/zoom/index.php', array('id' => $course->id));
