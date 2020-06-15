@@ -62,6 +62,11 @@ if ($ADMIN->fulltree) {
     $zoomurl = new admin_setting_configtext('mod_zoom/zoomurl', get_string('zoomurl', 'mod_zoom'),
             get_string('zoomurl_desc', 'mod_zoom'), '', PARAM_URL);
     $settings->add($zoomurl);
+    
+    // group id(s) to license
+    $group_ids = new admin_setting_configtext('mod_zoom/group_ids', get_string('groupids', 'mod_zoom'),
+      get_string('groupids_desc', 'mod_zoom'), '', PARAM_ALPHANUMEXT);
+    $settings->add($group_ids);
 
     $jointimechoices = array(0, 5, 10, 15, 20, 30, 45, 60);
     $jointimeselect = array();

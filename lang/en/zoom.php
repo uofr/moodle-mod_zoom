@@ -161,13 +161,13 @@ $string['zoomerr_meetingnotfound'] = 'This meeting cannot be found on Zoom. You 
 $string['zoomerr_meetingnotfound_info'] = 'This meeting cannot be found on Zoom. Please contact the meeting host if you have questions.';
     $string['zoomerr_usernotfound'] = '<h3 style="text-align: left">Zoom Account Configuration Required</h3>
     
-    <div class="alert alert-warning"><p style="text-align: left"><b>If you already have a Zoom account</b> associated with your <b><i>uregina.ca</i></b> email address, but it does not match your current UR Courses email address (<b>{$a->email}</b>), please contact <a href="mailto:IT.Support@uregina.ca">IT.Support@uregina.ca</a> and request that your UR Courses profile be updated to use the email address associated with your Zoom account.</p>
+    <div class="alert alert-warning"><p style="text-align: left"><b>Sorry, we were unable to find an account on Zoom associated with your current UR Courses email address (<b>{$a->email}</b>).</p>
     
-    <p style="text-align: left; margin-top: 1em"><b>If you are using Zoom for the first time</b>, you must first create a Zoom account by visiting <a href="{$a->url}" target="_blank">{$a->url}</a> and sign up with your <b><i>uregina.ca</i></b> email address. Once you have a Zoom account that matches the email address used in your UR Courses profile (<b>{$a->email}</b>), you will be able to continue setting up your meeting.</p>
-    
-    <p style="text-align: left; margin-top: 1em">If you intend to host Zoom meetings that will be longer than 40 minutes, contact <a href="mailto:IT.Support@uregina.ca">IT.Support@uregina.ca</a> and request that your Zoom account be upgraded to pro.</p>
+    <p style="text-align: left; margin-top: 1em"><b>If you are using Zoom for the first time</b>, you must create a Zoom account by visiting <a href="{$a->url}" target="_blank">{$a->url}</a> and sign up with your <b><i>uregina.ca</i></b> email address. Once you have a Zoom account that matches the email address used in your UR Courses profile (<b>{$a->email}</b>), you will be able to continue setting up your meeting.</p>
     
     <p style="text-align: left; margin-top: 1em">Additional information on using Zoom is available in the UR Courses guides, <a href="https://urcourses.uregina.ca/guides/instructor/zoom" target="_blank">https://urcourses.uregina.ca/guides/instructor/zoom</a>.</p></div>';
 $string['zoomurl'] = 'Zoom home page URL';
 $string['zoomurl_desc'] = '';
 $string['zoom:view'] = 'View Zoom meetings';
+$string['groupids'] = 'Reassign licenses';
+$string['groupids_desc'] = 'Licenses within this group will be recycled.';

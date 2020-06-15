@@ -80,7 +80,13 @@ class mod_zoom_webservice {
      * @var string
      */
     protected $apisecret;
-
+    
+    /**
+     * Group ID for recycling
+     * @var string
+     */
+    protected $groupings;
+    
     /**
      * Whether to recycle licenses.
      * @var bool
@@ -130,6 +136,10 @@ class mod_zoom_webservice {
             } else {
                 throw new moodle_exception('errorwebservice', 'mod_zoom', '', get_string('zoomerr_licensesnumber_missing', 'zoom'));
             }
+        }
+        //additional new setting [UofR - Joel.Dapiawen@uregina.ca ]
+        if (!empty($config->group_ids)) {
+            $this->groupings = $config->group_ids;
         }
     }
 
@@ -337,16 +347,42 @@ class mod_zoom_webservice {
         $usertimes = array();
         $userslist = $this->list_users();
         foreach ($userslist as $user) {
-            if ($user->type != ZOOM_USER_TYPE_BASIC && isset($user->last_login_time)) {
-                $usertimes[$user->id] = strtotime($user->last_login_time);
+            if (!empty($user->group_ids)) {
+                //we only want to get zoom user accounts that is assign into a group.
+                $groupme = $user->group_ids;
+                $lastnato = $user->last_name;
+                foreach ($groupme as $value) {  //loop trough array[objects]
+                    if (!empty($this->groupings)){ //check first if Re-assign License is setup in the admin settings
+                        if ($value == $this->groupings) {
+                            $listmeetings = $this->list_meetings($user->id, "0");
+                            if ($user->type != ZOOM_USER_TYPE_BASIC && isset($user->last_login_time)) {
+                                foreach ($listmeetings as $list) {
+                                    if($list->type != 1 && $list->host_id == $user->id &&  $user->type != ZOOM_USER_TYPE_BASIC )  {
+                                        //  echo var_dump($list->host_id." meeting type is: ". $list->type." ".$user->id) ,'<br>';
+                                        $this->nextid = $list->host_id;
+                                    }
+                                }
+                                if ($this->nextid == $user->id) {
+                                       continue;
+                                }
+                                $usertimes[$user->id] = strtotime($user->last_login_time);
+                            }
+                        }
+                    }else{
+                        //else do the default license recycling..
+                        if ($user->type != ZOOM_USER_TYPE_BASIC && isset($user->last_login_time)) {
+                            $usertimes[$user->id] = strtotime($user->last_login_time);
+                        }
+                    }
+                }
+
             }
         }
-
         if (!empty($usertimes)) {
             return array_search(min($usertimes), $usertimes);
+        } else {
+            return false;
         }
-
-        return false;
     }
 
     /**
@@ -455,8 +491,10 @@ class mod_zoom_webservice {
         if ($this->recyclelicenses && $this->_make_call("users/$zoom->host_id")->type == ZOOM_USER_TYPE_BASIC) {
             if ($this->_paid_user_limit_reached()) {
                 $leastrecentlyactivepaiduserid = $this->_get_least_recently_active_paid_user_id();
-                // Changes least_recently_active_user to a basic user so we can use their license.
-                $this->_make_call("users/$leastrecentlyactivepaiduserid", array('type' => ZOOM_USER_TYPE_BASIC), 'patch');
+                if (!empty($leastrecentlyactivepaiduserid)) {
+                    // Changes least_recently_active_user to a basic user so we can use their license.
+                    $this->_make_call("users/$leastrecentlyactivepaiduserid", array('type' => ZOOM_USER_TYPE_BASIC), 'patch');
+                }
             }
             // Changes current user to pro so they can make a meeting.
             $this->_make_call("users/$zoom->host_id", array('type' => ZOOM_USER_TYPE_PRO), 'patch');
