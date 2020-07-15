@@ -50,11 +50,6 @@ MOD.addEmails = function(tagsarray) {
 
    if(inputstring != "")
     input.set('value',inputstring);
-
-   console.log("In addEmail");
-  console.log(tagsarray);
-  console.log("In addEmail2");
-  console.log(input.get('value'));
  }
 
  MOD.addNewEmail = function(value) {
@@ -67,11 +62,6 @@ MOD.addEmails = function(tagsarray) {
   }else{
     input.set('value', inputvalue+','+value);
   }
-
-  console.log("In addNewEmail");
-  console.log(value);
-  console.log("In addNewEmail2");
-  console.log(input.get('value'));
  }
 
  MOD.deleteEmail = function(value) {
@@ -103,11 +93,6 @@ MOD.init = function(ogteachers, cohosts) {
     }else{
       var tagsarray = cohosts;
     }
-
-    console.log("At beginning");
-    console.log(ogteachers);
-    console.log("At beginning 2");
-    console.log(cohosts);
 
     var teachersnames =[];
     var values=[];
@@ -162,9 +147,6 @@ MOD.init = function(ogteachers, cohosts) {
   
         M.mod_zoom.cohost.addTags(tagContainer,tagsarray);    
         M.mod_zoom.cohost.addEmails(tagsarray);
-
-        console.log("In remove");
-        console.log(tagsarray);
 
       }
     })
@@ -229,9 +211,6 @@ MOD.init = function(ogteachers, cohosts) {
             M.mod_zoom.cohost.addEmails(tagsarray);
             M.mod_zoom.cohost.addNewEmail(newtag);
             inputNode.set('value',"");
-
-            console.log("In key up");
-            console.log(tagsarray);
           }
       });
 
@@ -275,9 +254,6 @@ MOD.init = function(ogteachers, cohosts) {
               M.mod_zoom.cohost.addTags(tagContainer,tagsarray);
               M.mod_zoom.cohost.addEmails(tagsarray);
               inputNode.set('value',"");
-
-              console.log("In add from select");
-              console.log(tagsarray);
             }
   
           }
