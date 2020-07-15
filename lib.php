@@ -71,6 +71,26 @@ function zoom_add_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
 
     $zoom->course = (int) $zoom->course;
 
+    //Added for new alternative hosts function
+    if(isset($zoom->cohostid)){
+        $teacheremails = array_filter(explode(",", $zoom->cohostid));
+        $inputstring = zoom_update_alternative_host($teacheremails);
+        $zoom->alternative_hosts = $inputstring;
+
+        unset($zoom->cohostid);
+    }
+    if(isset($zoom->newcohost )&& !empty($zoom->newcohost)){
+        $teacheremails = array_filter(explode(",", $zoom->newcohost));
+        $inputstring = zoom_update_alternative_host($teacheremails);
+        if($zoom->alternative_hosts==""){
+            $zoom->alternative_hosts = $inputstring;
+        }else{
+            $zoom->alternative_hosts = $alternative_hosts.",".$inputstring;
+        }
+        unset($zoom->newcohost);
+    }
+    //End of Added
+   
     $service = new mod_zoom_webservice();
     $response = $service->create_meeting($zoom);
     $zoom = populate_zoom_from_response($zoom, $response);
@@ -96,6 +116,30 @@ function zoom_add_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
 function zoom_update_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
     global $CFG, $DB;
     require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
+
+    //Added for new alternative host
+    if(isset($zoom->cohostid)){
+        $teacheremails = array_filter(explode(",", $zoom->cohostid));
+        $inputstring = zoom_update_alternative_host($teacheremails);
+        $zoom->alternative_hosts = $inputstring;
+        unset($zoom->cohostid);
+    }
+    if(isset($zoom->newcohost )&& !empty($zoom->newcohost)){
+        $teacheremails = array_filter(explode(",", $zoom->newcohost));
+        $inputstring = zoom_update_alternative_host($teacheremails);
+
+        if($zoom->alternative_hosts==""){
+            $zoom->alternative_hosts = $inputstring;
+        }else{
+            $zoom->alternative_hosts = $zoom->alternative_hosts.",".$inputstring;
+        }
+
+        unset($zoom->newcohost);
+    }
+    //End of Added
+ 
+
+
 
     // The object received from mod_form.php returns instance instead of id for some reason.
     $zoom->id = $zoom->instance;
@@ -307,10 +351,12 @@ function zoom_calendar_item_update(stdClass $zoom) {
     if (!empty($eventid)) {
         calendar_event::load($eventid)->update($event);
     } else {
+
         $event->courseid = $zoom->course;
         $event->modulename = 'zoom';
         $event->instance = $zoom->id;
         $event->eventtype = 'zoom';
+
         calendar_event::create($event);
     }
 }
@@ -506,6 +552,32 @@ function zoom_pluginfile($course, $cm, $context, $filearea, array $args, $forced
     require_login($course, true, $cm);
 
     send_file_not_found();
+}
+
+/*For Alternative Host Select */
+
+/**
+ * Return a string of email address coressponding to selected 
+ *
+ * @param array $teacheremails all teachers added as alternative hosts
+ * @return string of emails to append to zoom meeting
+ */
+function zoom_update_alternative_host($teacheremails) {
+
+    $count = count($teacheremails);
+    $inputstring ="";
+
+    for($i=0; $i<$count; $i++){
+
+        if($teacheremails[$i]!= "0" &&  $teacheremails[$i]!= ""){
+
+            if($i == $count-1)
+                $inputstring .= $teacheremails[$i];
+            else
+                $inputstring .= $teacheremails[$i].",";
+        }
+    }
+    return $inputstring;
 }
 
 /* Navigation API */

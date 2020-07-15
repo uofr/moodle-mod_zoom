@@ -292,3 +292,84 @@ function zoom_get_participants_report($detailsid) {
     $participants = $DB->get_records_sql($sql, $params);
     return $participants;
 }
+
+//Added for new co-host feature
+/**
+ * Get all instructors for a course
+ * @param string $detailsid The meeting ID that you want to get the participants report for.
+ * @return array The user data as an array of records (array of arrays).
+ */
+function zoom_get_course_instructors($courseid) {
+    global $DB;
+
+    $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
+    $context = get_context_instance(CONTEXT_COURSE, $courseid);
+    $teachers = get_role_users($role->id, $context);
+
+    $teachersmenu = array();
+    if ($teachers) {
+        foreach ($teachers as $teacher) {
+            $teacherarray=new stdClass;
+            $teacherarray->email = $teacher->email;
+            $teacherarray->name = fullname($teacher);
+            $teachersmenu[] = $teacherarray;
+        }
+    } 
+
+    return $teachersmenu;
+}
+
+//Added for new co-host feature
+/**
+ * Get all instructors for a course
+ * @param string $detailsid The meeting ID that you want to get the participants report for.
+ * @return array The user data as an array of records (array of arrays).
+ */
+function zoom_get_alternative_hosts($zoomid) {
+    global $DB;
+  
+    $zoom  = $DB->get_record('zoom', array('id' => $zoomid), '*', MUST_EXIST);
+    $cohosts = explode(",", $zoom->alternative_hosts);
+    $users = [];
+    foreach($cohosts as $cohost){
+
+        if($cohost != ""){
+            $user = zoom_get_user_info(trim($cohost));
+            $usertemp=new stdClass;
+            $usertemp->email = $user->email;
+            $usertemp->name = fullname($user);
+            $users[] = $usertemp;
+        }
+    }
+    if(empty($users))
+        return false;
+    else
+        return $users;
+
+}
+
+/**
+* Get user from db *this forces that all alternative hosts must be in moodle instance
+* @param int $email of user
+* @param user object
+*/
+function zoom_get_user_info($email){
+
+    global $DB;
+
+    $user = $DB->get_record('user', array('email' => $email), '*', MUST_EXIST);
+    return $user;
+}
+
+/**
+* Get user from db *this forces that all alternative hosts must be in moodle instance
+* @param int $email of user
+* @param user object
+*/
+function zoom_get_user($id){
+
+    global $DB;
+
+    $user = $DB->get_record('user', array('id' => $id), '*', MUST_EXIST);
+    return $user;
+}

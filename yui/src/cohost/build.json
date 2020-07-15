@@ -1,0 +1,10 @@
+{
+    "name": "moodle-mod_zoom-cohost",
+    "builds": {
+        "moodle-mod_zoom-cohost": {
+            "jsfiles": [
+                "cohost.js"
+            ]
+        }
+    }
+}

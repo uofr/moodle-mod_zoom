@@ -75,6 +75,19 @@ class mod_zoom_mod_form extends moodleform_mod {
             }
         }
 
+
+        //Added for fancier alternative host select
+         // Choose the teacher (if allowed)     
+         $teacherarray = zoom_get_course_instructors($this->_course->id);
+        //get list of co-hosts already added, if none false is returned
+        $cohosts=false;
+        if(!$isnew)
+            $cohosts = zoom_get_alternative_hosts($this->current->id);
+       
+           
+        $PAGE->requires->yui_module('moodle-mod_zoom-cohost','M.mod_zoom.cohost.init', array($teacherarray,$cohosts));
+        //end of added
+
         // Start of form definition.
         $mform = $this->_form;
 
@@ -163,11 +176,38 @@ class mod_zoom_mod_form extends moodleform_mod {
         $mform->disabledIf('meetingoptions', 'webinar', 'checked');
 
         // Add alternative hosts.
-        $mform->addElement('text', 'alternative_hosts', get_string('alternative_hosts', 'zoom'), array('size' => '64'));
-        $mform->setType('alternative_hosts', PARAM_TEXT);
+        //$mform->addElement('text', 'alternative_hosts', get_string('alternative_hosts', 'zoom'), array('size' => '64'));
+        //$mform->setType('alternative_hosts', PARAM_TEXT);
         // Set the maximum field length to 255 because that's the limit on Zoom's end.
-        $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
-        $mform->addHelpButton('alternative_hosts', 'alternative_hosts', 'zoom');
+        //$mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
+       // $mform->addHelpButton('alternative_hosts', 'alternative_hosts', 'zoom');
+
+
+        //Add co-host select option 
+        $mform->addElement('text', 'newcohost', '','hidden');
+        $mform->addElement('text', 'cohostid', '','hidden');
+
+
+        //surrounded by a hidden div to open when zoom meeting is clicked.
+        $mform->addElement('html', '<div id="addcohost"  class="form-group row  fitem" >');
+
+        $mform->addElement('html', '<div class="col-md-3" >');
+        $mform->addElement('html', '<label>'.get_string('alternative_hosts', 'zoom').'</label> ');
+                  
+        $mform->addHelpButton('addzoom','zoomaddcohost', 'scheduler');
+
+        $mform->addElement('html', '</div>');
+           
+        $mform->addElement('html', '<div class="col-md-9" >');
+        $mform->addElement('html', '<div id="demo" class="  yui3-skin-sam tag-container" >');
+           
+        $mform->addElement('text', 'ac-input', '');
+           
+        $mform->addElement('html', '</div>');
+        $mform->addElement('html', '</div>');
+        $mform->addElement('html', '</div>');
+        //End of added
+
 
         // Add meeting id.
         $mform->addElement('hidden', 'meeting_id', -1);
@@ -218,14 +258,52 @@ class mod_zoom_mod_form extends moodleform_mod {
         // Check if the listed alternative hosts are valid users on Zoom.
         require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
         $service = new mod_zoom_webservice();
-        $alternativehosts = explode(',', $data['alternative_hosts']);
-        foreach ($alternativehosts as $alternativehost) {
+       // $alternativehosts = explode(',', $data['alternative_hosts']);
+       /* foreach ($alternativehosts as $alternativehost) {
             if (!($service->get_user($alternativehost))) {
                 $errors['alternative_hosts'] = 'User ' . $alternativehost . ' was not found on Zoom.';
                 break;
             }
-        }
+        }*/
 
+        if (isset($data['cohostid'])) {
+
+            $teacheremails = explode(",", $data['cohostid']);
+            
+            foreach($teacheremails as $email){
+
+                if($email != "0"){
+                    //check if provided emails are connected to zoom accounts
+                    if (!($service->get_user($email))) {
+
+                        $errors['ac-input'] = 'User ' .$email. ' was not found on Zoom.';
+                        break;
+                    }
+                }
+            }
+        }
+        //now check typed in email, first check if they are valid emails, then if they have accounts
+        if (isset($data['newcohost'])) {
+            $teacheremails = explode(",", $data['newcohost']);
+
+            //check if provided emails are connected to zoom accounts
+            foreach($teacheremails as $email){
+                if($email != ""){
+                    $email=trim($email);
+                    
+                    if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                        
+                        if (!($service->get_user($email))) {
+                            $errors['ac-input'] = 'User ' . $email . ' was not found on Zoom.';
+                            break;
+                        }
+                    }else{
+                        $errors['ac-input'] = 'Email entered is invalid.';
+                        break;
+                    }
+                }
+            }
+        }
         return $errors;
     }
 }

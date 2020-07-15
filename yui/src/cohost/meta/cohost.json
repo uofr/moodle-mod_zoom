@@ -1,0 +1,7 @@
+{
+    "moodle-mod_zoom-cohost": {
+        "requires": [
+            "base", "node", "event"
+        ]
+    }
+}
