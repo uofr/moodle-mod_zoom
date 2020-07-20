@@ -165,10 +165,14 @@ function zoom_update_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
         //Delete current meeting
         $oldid = $zoom->instance;
         // If the meeting is missing from zoom, don't bother with the webservice.
-        if ($zoom->exists_on_zoom) {
-           // $service = new mod_zoom_webservice();
+
+        if (!$ogzoom = $DB->get_record('zoom', array('id' => $oldid))) {
+            return false;
+        }
+
+        if ($ogzoom->exists_on_zoom) {
             try {
-                $service->delete_meeting($zoom->meeting_id, $zoom->webinar);
+                $service->delete_meeting($ogzoom->meeting_id, $ogzoom->webinar);
             } catch (moodle_exception $error) {
                 if (strpos($error, 'is not found or has expired') === false) {
                     throw $error;
@@ -181,19 +185,9 @@ function zoom_update_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
 
         $zoom->id = $oldid;
         $zoom->timemodified = time();
+        //update db with new meeting info
         $DB->update_record('zoom', $zoom);
-
-        $updatedzoomrecord = $DB->get_record('zoom', array('id' => $zoom->id));
-        $zoom->meeting_id = $updatedzoomrecord->meeting_id;
-        $zoom->webinar = $updatedzoomrecord->webinar;
-
-        // Update meeting on Zoom.
-        try {
-            $service->update_meeting($zoom);
-        } catch (moodle_exception $error) {
-            return false;
-        }
-
+     
         zoom_calendar_item_update($zoom);
         zoom_grade_item_update($zoom);
     
