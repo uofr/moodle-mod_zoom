@@ -50,6 +50,9 @@ define('ZOOM_USER_TYPE_BASIC', 1);
 define('ZOOM_USER_TYPE_PRO', 2);
 define('ZOOM_USER_TYPE_CORP', 3);
 
+//Added for Creating New Users
+define('ZOOM_USER_DOMAIN', 'uregina.ca');
+
 /**
  * Terminate the current script with a fatal error.
  *
@@ -372,4 +375,55 @@ function zoom_get_user($id){
 
     $user = $DB->get_record('user', array('id' => $id), '*', MUST_EXIST);
     return $user;
+}
+
+
+//Added for account creation checks
+/**
+* Get role of user
+* @param int $email of user
+* @param user object
+*/
+function zoom_get_user_role($id){
+
+    global $COURSE;
+
+    $rolestr = array();
+    $context = context_course::instance($COURSE->id);
+    $roles = get_user_roles($context, $id);
+    foreach ($roles as $role) {
+        $rolestr[] = role_get_name($role, $context);
+    }
+    
+    return $rolestr;
+}
+
+
+/**
+* Check if email is in same domain
+* @param int $email of user
+* @param user object
+*/
+function zoom_email_check($email){
+
+    $split = explode('@',$email);
+    
+    if(ZOOM_USER_DOMAIN == $split[1])
+        return true;
+    else
+        return false;
+}
+/**
+* Check if user has any alias emails connected to account
+* @param int $email of user
+* @param user object
+*/
+function zoom_email_alias($user){
+
+    //pulll username from db
+    //$user = zoom_get_user_info($email);
+    //append email to it
+    $alias = $user->username.'@'.ZOOM_USER_DOMAIN;
+    //test if it is their zoom account
+    return $alias;
 }

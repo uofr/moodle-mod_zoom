@@ -231,7 +231,7 @@ class mod_zoom_webservice {
      */
     public function autocreate_user($user) {
         $url = 'users';
-        $data = array('action' => 'autocreate');
+        $data = array('action' => 'create');
         $data['user_info'] = array(
             'email' => $user->email,
             'type' => ZOOM_USER_TYPE_PRO,
@@ -338,7 +338,6 @@ class mod_zoom_webservice {
                 throw $error;
             }
         }
-
         return $founduser;
     }
 

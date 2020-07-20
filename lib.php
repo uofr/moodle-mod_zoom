@@ -69,8 +69,17 @@ function zoom_add_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
     global $CFG, $DB;
     require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
 
+    $service = new mod_zoom_webservice();
     $zoom->course = (int) $zoom->course;
 
+    //Added for assign 
+    if(isset($zoom->assign)){
+        $newhost = $service->get_user($zoom->assign);
+        //check if hostid matches selected host
+         if($zoom->host_id != $newhost->id){
+            $zoom->host_id= $newhost->id;
+        }
+    }
     //Added for new alternative hosts function
     if(isset($zoom->cohostid)){
         $teacheremails = array_filter(explode(",", $zoom->cohostid));
@@ -91,7 +100,7 @@ function zoom_add_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
     }
     //End of Added
    
-    $service = new mod_zoom_webservice();
+    
     $response = $service->create_meeting($zoom);
     $zoom = populate_zoom_from_response($zoom, $response);
 
@@ -117,6 +126,18 @@ function zoom_update_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
     global $CFG, $DB;
     require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
 
+    $service = new mod_zoom_webservice();
+
+    $changehost = FALSE;
+    //Added for assign 
+    if(isset($zoom->assign)){
+        $newhost = $service->get_user($zoom->assign);
+        //check if hostid matches selected host
+        if($zoom->host_id != $newhost->id){
+            $zoom->host_id= $newhost->id;
+            $changehost = TRUE;
+        }    
+    }
     //Added for new alternative host
     if(isset($zoom->cohostid)){
         $teacheremails = array_filter(explode(",", $zoom->cohostid));
@@ -137,31 +158,69 @@ function zoom_update_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
         unset($zoom->newcohost);
     }
     //End of Added
- 
 
+    //if the assigned host has been changed, we need to change the host id
+    //since the zoom api does not allow the host id to be update we must then delete, and create a new meeting
+    if($changehost){
+        //Delete current meeting
+        $oldid = $zoom->instance;
+        // If the meeting is missing from zoom, don't bother with the webservice.
+        if ($zoom->exists_on_zoom) {
+           // $service = new mod_zoom_webservice();
+            try {
+                $service->delete_meeting($zoom->meeting_id, $zoom->webinar);
+            } catch (moodle_exception $error) {
+                if (strpos($error, 'is not found or has expired') === false) {
+                    throw $error;
+                }
+            }
+        }
+        //Create new meeting with updated info
+        $response = $service->create_meeting($zoom);
+        $zoom = populate_zoom_from_response($zoom, $response);
 
+        $zoom->id = $oldid;
+        $zoom->timemodified = time();
+        $DB->update_record('zoom', $zoom);
 
-    // The object received from mod_form.php returns instance instead of id for some reason.
-    $zoom->id = $zoom->instance;
-    $zoom->timemodified = time();
-    $DB->update_record('zoom', $zoom);
+        $updatedzoomrecord = $DB->get_record('zoom', array('id' => $zoom->id));
+        $zoom->meeting_id = $updatedzoomrecord->meeting_id;
+        $zoom->webinar = $updatedzoomrecord->webinar;
 
-    $updatedzoomrecord = $DB->get_record('zoom', array('id' => $zoom->instance));
-    $zoom->meeting_id = $updatedzoomrecord->meeting_id;
-    $zoom->webinar = $updatedzoomrecord->webinar;
+        // Update meeting on Zoom.
+        try {
+            $service->update_meeting($zoom);
+        } catch (moodle_exception $error) {
+            return false;
+        }
 
-    // Update meeting on Zoom.
-    $service = new mod_zoom_webservice();
-    try {
-        $service->update_meeting($zoom);
-    } catch (moodle_exception $error) {
-        return false;
+        zoom_calendar_item_update($zoom);
+        zoom_grade_item_update($zoom);
+    
+        return true;
+
+    }else{
+        // The object received from mod_form.php returns instance instead of id for some reason.
+        $zoom->id = $zoom->instance;
+        $zoom->timemodified = time();
+        $DB->update_record('zoom', $zoom);
+
+        $updatedzoomrecord = $DB->get_record('zoom', array('id' => $zoom->instance));
+        $zoom->meeting_id = $updatedzoomrecord->meeting_id;
+        $zoom->webinar = $updatedzoomrecord->webinar;
+
+        // Update meeting on Zoom.
+        try {
+            $service->update_meeting($zoom);
+        } catch (moodle_exception $error) {
+            return false;
+        }
+
+        zoom_calendar_item_update($zoom);
+        zoom_grade_item_update($zoom);
+
+        return true;
     }
-
-    zoom_calendar_item_update($zoom);
-    zoom_grade_item_update($zoom);
-
-    return true;
 }
 
 /**

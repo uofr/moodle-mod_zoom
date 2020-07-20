@@ -49,12 +49,37 @@ class mod_zoom_mod_form extends moodleform_mod {
         $service = new mod_zoom_webservice();
         $zoomuser = $service->get_user($USER->email);
         if ($zoomuser === false) {
+
+            //if user does not have an account create on for them if within guidelines
+            //check if zoom account is under user name instead
+            $alias = zoom_email_alias($USER);
+
+            //check if alias emails are connected to zoom account
+            $zoomuser = $service->get_user($alias);
+
+            if ($zoomuser === false) {
+
+                $roles = zoom_get_user_role($USER->id);
+                //check if role is instructor and email is within zoom domain
+                if (in_array("Instructor", $roles) && zoom_email_check($USER->email)) {
+                    $created = $service->autocreate_user($USER);
+                    if(!$created){
+                        // Assume user is using Zoom for the first time/has inproper access
+                        $errstring = 'zoomerr_usernotfound';
+                        // After they set up their account, the user should continue to the page they were on.
+                        $nexturl = $PAGE->url;
+                        $langvars = ['email'=>$USER->email,'url'=>$config->zoomurl];
+                        zoom_fatal_error($errstring, 'mod_zoom', $nexturl, $langvars);
+                    }
+                }
+            }
+
             // Assume user is using Zoom for the first time.
-            $errstring = 'zoomerr_usernotfound';
+            //$errstring = 'zoomerr_usernotfound';
             // After they set up their account, the user should continue to the page they were on.
-            $nexturl = $PAGE->url;
-			$langvars = ['email'=>$USER->email,'url'=>$config->zoomurl];
-            zoom_fatal_error($errstring, 'mod_zoom', $nexturl, $langvars);
+           // $nexturl = $PAGE->url;
+			//$langvars = ['email'=>$USER->email,'url'=>$config->zoomurl];
+            //zoom_fatal_error($errstring, 'mod_zoom', $nexturl, $langvars);
         }
 
         // If updating, ensure we can get the meeting on Zoom.
@@ -77,12 +102,17 @@ class mod_zoom_mod_form extends moodleform_mod {
 
 
         //Added for fancier alternative host select
-         // Choose the teacher (if allowed)     
-         $teacherarray = zoom_get_course_instructors($this->_course->id);
+        // Choose the teacher (if allowed)     
+        $teacherarray = zoom_get_course_instructors($this->_course->id);
         //get list of co-hosts already added, if none false is returned
         $cohosts=false;
         if(!$isnew)
             $cohosts = zoom_get_alternative_hosts($this->current->id);
+
+        $teachernames=[];
+        foreach($teacherarray as $teacher){
+            $teachernames[]=$teacher->name;
+        }
        
            
         $PAGE->requires->yui_module('moodle-mod_zoom-cohost','M.mod_zoom.cohost.init', array($teacherarray,$cohosts));
@@ -93,6 +123,32 @@ class mod_zoom_mod_form extends moodleform_mod {
 
         // Adding the "general" fieldset, where all the common settings are showed.
         $mform->addElement('header', 'general', get_string('general', 'form'));
+
+        //Add an assign instructor field if user has the capbility to do so
+        $context = get_context_instance(CONTEXT_COURSE,$this->_course->id);
+        if (has_capability('mod/zoom:assign', $context)) {
+    
+            $teachersmenu = array($USER->email => fullname($USER));
+            foreach ($teacherarray as $teacher) {
+                $teachersmenu[$teacher->email] = $teacher->name;
+            }
+            $select = $mform->addElement('select', 'assign', get_string('assign', 'zoom'), $teachersmenu);
+            //need to set current host here
+            if(!$isnew){
+
+                $zoomusers=[];
+                foreach($teacherarray as $teacher){
+                    //not amazing may have to reconsider if we end up hitting the timeout limit for zoom requests
+                    $zoomusers[] = $service->get_user($teacher->email);
+                }
+                foreach($zoomusers as $zoomuser){
+                    if($zoomuser->id == $this->current->host_id ){
+                        $select->setSelected($zoomuser->email);
+                    }
+                }
+            }else
+                $select->setSelected($zoomuser->email);
+        }
 
         // Add topic (stored in database as 'name').
         $mform->addElement('text', 'name', get_string('topic', 'zoom'), array('size' => '64'));
@@ -237,7 +293,7 @@ class mod_zoom_mod_form extends moodleform_mod {
      * @return array
      */
     public function validation($data, $files) {
-        global $CFG;
+        global $CFG,$USER;
         $errors = array();
 
         // Only check for scheduled meetings.
@@ -266,25 +322,65 @@ class mod_zoom_mod_form extends moodleform_mod {
             }
         }*/
 
-        if (isset($data['cohostid'])) {
+        //check capability
+        if (isset($data['assign'])) {
+            $useremail = $data['assign'];
+            if($useremail != $USER->email){
+                $user = zoom_get_user_info($useremail);
 
-            $teacheremails = explode(",", $data['cohostid']);
-            
+                //check if zoom account is under user name instead
+                $alias = zoom_email_alias($user);
+
+                //check if provided emails or alias emails are connected to zoom accounts
+                if (!($service->get_user($useremail)) && !($service->get_user($alias))) {
+
+                    $roles = zoom_get_user_role($user->id);
+                    //check if role is instructor and email is within zoom domain
+                    if (in_array("Instructor", $roles) && zoom_email_check($useremail)) {
+                        $created = $service->autocreate_user($user);
+                        if(!$created){
+                            $errors['assign'] = 'User ' .$useremail.' was not found on Zoom. Account could not be created';
+                        }
+                    }else{
+                        $errors['assign'] = 'User ' .$useremail. ' was not found on Zoom.';
+                    }
+                }
+            }
+        }
+
+        if (isset($data['cohostid'])) {
+            $teacheremails = array_filter(explode(",", $data['cohostid']));
             foreach($teacheremails as $email){
 
                 if($email != "0"){
-                    //check if provided emails are connected to zoom accounts
-                    if (!($service->get_user($email))) {
 
-                        $errors['ac-input'] = 'User ' .$email. ' was not found on Zoom.';
-                        break;
+                    $user = zoom_get_user_info($email);
+
+                    //check if zoom account is under user name instead
+                    $alias = zoom_email_alias($user);
+
+                    //check if provided emails or alias emails are connected to zoom accounts
+                    if (!($service->get_user($email)) && !($service->get_user($alias))) {
+
+                        $roles = zoom_get_user_role($user->id);
+                        //check if role is instructor and email is within zoom domain
+                        if (in_array("Instructor", $roles) && zoom_email_check($email)) {
+                            $created = $service->autocreate_user($user);
+                            if(!$created){
+                                $errors['ac-input'] = 'User ' .$email. ' was not found on Zoom. Account could not be created';
+                                break;
+                            }
+                        }else{
+                            $errors['ac-input'] = 'User ' .$email. ' was not found on Zoom.';
+                            break;
+                        }
                     }
                 }
             }
         }
         //now check typed in email, first check if they are valid emails, then if they have accounts
         if (isset($data['newcohost'])) {
-            $teacheremails = explode(",", $data['newcohost']);
+            $teacheremails = array_filter(explode(",", $data['newcohost']));
 
             //check if provided emails are connected to zoom accounts
             foreach($teacheremails as $email){
@@ -292,10 +388,25 @@ class mod_zoom_mod_form extends moodleform_mod {
                     $email=trim($email);
                     
                     if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+
+                        $user = zoom_get_user_info($email);
+                        //check if zoom account is under user name instead
+                        $alias = zoom_email_alias($user);
                         
-                        if (!($service->get_user($email))) {
-                            $errors['ac-input'] = 'User ' . $email . ' was not found on Zoom.';
-                            break;
+                        if (!($service->get_user($email))&& !($service->get_user($alias))) {
+
+                            $roles = zoom_get_user_role($user->id);
+                            //check if role is instructor and email is within zoom domain
+                            if (in_array("Instructor", $roles) && zoom_email_check($email)) {
+                                $created = $service->autocreate_user($user);
+                                if(!$created){
+                                    $errors['ac-input'] = 'User ' .$email. ' was not found on Zoom. Account could not be created';
+                                    break;
+                                }
+                            }else{
+                                $errors['ac-input'] = 'User ' .$email. ' was not found on Zoom.';
+                                break;
+                            }
                         }
                     }else{
                         $errors['ac-input'] = 'Email entered is invalid.';

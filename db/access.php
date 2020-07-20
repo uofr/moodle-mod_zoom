@@ -70,4 +70,12 @@ $capabilities = array(
             'manager' => CAP_ALLOW
         )
     ),
+    'mod/zoom:assign' => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => array(
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW
+        )
+    ),
 );
