@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 $string['actions'] = 'Actions';
 $string['addtocalendar'] = 'Add to calendar';
 $string['alternative_hosts'] = 'Alternative Hosts';
-$string['alternative_hosts_help'] = 'The alternative host option allows you to schedule meetings and designate another Pro user on the same account to start the meeting or webinar if you are unable to. This user will receive an email notifying them that they\'ve been added as an alternative host, with a link to start the meeting. Separate multiple emails by comma (without spaces).';
+$string['alternative_hosts_help'] = 'The alternative host option allows you to schedule meetings and designate another Pro user on the same account to start the meeting or webinar if you are unable to. This user will receive an email notifying them that they have been added as an alternative host, with a link to start the meeting. Click an instructors name to add them as a host. If different hosts are need add them by email. Separate multiple emails by comma (without spaces) Press SPACEBAR to add new email.';
 $string['allmeetings'] = 'View all meetings';
 $string['apikey'] = 'Zoom API key';
 $string['apikey_desc'] = '';

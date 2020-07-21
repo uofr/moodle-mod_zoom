@@ -239,29 +239,31 @@ class mod_zoom_mod_form extends moodleform_mod {
        // $mform->addHelpButton('alternative_hosts', 'alternative_hosts', 'zoom');
 
 
-        //Add co-host select option 
-        $mform->addElement('text', 'newcohost', '','hidden');
-        $mform->addElement('text', 'cohostid', '','hidden');
+       
 
 
         //surrounded by a hidden div to open when zoom meeting is clicked.
-        $mform->addElement('html', '<div id="addcohost"  class="form-group row  fitem" >');
+        $mform->addElement('html', '<div id="id_addcohost"  class="form-group row  fitem" >');
 
         $mform->addElement('html', '<div class="col-md-3" >');
         $mform->addElement('html', '<label>'.get_string('alternative_hosts', 'zoom').'</label> ');
-                  
-        $mform->addHelpButton('addzoom','zoomaddcohost', 'scheduler');
+        //Add co-host select option - odd placement but helps to format a better spot for help icon
+        $mform->addElement('text', 'newcohost', '','hidden');
+        $mform->addElement('text', 'cohostid', '','hidden');
 
         $mform->addElement('html', '</div>');
            
         $mform->addElement('html', '<div class="col-md-9" >');
         $mform->addElement('html', '<div id="demo" class="  yui3-skin-sam tag-container" >');
            
+        
         $mform->addElement('text', 'ac-input', '');
            
         $mform->addElement('html', '</div>');
         $mform->addElement('html', '</div>');
         $mform->addElement('html', '</div>');
+
+        $mform->addHelpButton('newcohost', 'alternative_hosts', 'zoom');
         //End of added
 
 
