@@ -44,6 +44,7 @@ defined('MOODLE_INTERNAL') || die();
 function zoom_supports($feature) {
     switch($feature) {
         case FEATURE_BACKUP_MOODLE2:
+        case FEATURE_COMPLETION_TRACKS_VIEWS:
         case FEATURE_GRADE_HAS_GRADE:
         case FEATURE_GROUPINGS:
         case FEATURE_GROUPMEMBERSONLY:
@@ -69,9 +70,14 @@ function zoom_add_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
     global $CFG, $DB;
     require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
 
-    $service = new mod_zoom_webservice();
-    $zoom->course = (int) $zoom->course;
+    // Deals with password manager issues
+    $zoom->password = $zoom->meetingcode;
+    unset($zoom->meetingcode);
 
+    $zoom->course = (int) $zoom->course;
+    
+    $service = new mod_zoom_webservice();
+    
     //Added for assign 
     if(isset($zoom->assign)){
         $newhost = $service->get_user($zoom->assign);
@@ -99,8 +105,7 @@ function zoom_add_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
         unset($zoom->newcohost);
     }
     //End of Added
-   
-    
+
     $response = $service->create_meeting($zoom);
     $zoom = populate_zoom_from_response($zoom, $response);
 
@@ -126,6 +131,21 @@ function zoom_update_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
     global $CFG, $DB;
     require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
 
+    // The object received from mod_form.php returns instance instead of id for some reason.
+    $zoom->id = $zoom->instance;
+    $zoom->timemodified = time();
+
+    // Deals with password manager issues
+    $zoom->password = $zoom->meetingcode;
+    unset($zoom->meetingcode);
+
+    $DB->update_record('zoom', $zoom);
+
+    $updatedzoomrecord = $DB->get_record('zoom', array('id' => $zoom->instance));
+    $zoom->meeting_id = $updatedzoomrecord->meeting_id;
+    $zoom->webinar = $updatedzoomrecord->webinar;
+
+    // Update meeting on Zoom.
     $service = new mod_zoom_webservice();
 
     $changehost = FALSE;
@@ -262,6 +282,15 @@ function populate_zoom_from_response(stdClass $zoom, stdClass $response) {
     }
     if (isset($response->settings->alternative_hosts)) {
         $newzoom->alternative_hosts = $response->settings->alternative_hosts;
+    }
+    if(isset($response->settings->mute_upon_entry)) {
+        $newzoom->option_mute_upon_entry = $response->settings->mute_upon_entry;
+    }
+    if(isset($response->settings->meeting_authentication)) {
+        $newzoom->option_authenticated_users = $response->settings->meeting_authentication;
+    }
+    if(isset($response->settings->waiting_room)) {
+        $newzoom->option_waiting_room = $response->settings->waiting_room;
     }
     $newzoom->timemodified = time();
 
@@ -404,12 +433,10 @@ function zoom_calendar_item_update(stdClass $zoom) {
     if (!empty($eventid)) {
         calendar_event::load($eventid)->update($event);
     } else {
-
         $event->courseid = $zoom->course;
         $event->modulename = 'zoom';
         $event->instance = $zoom->id;
         $event->eventtype = 'zoom';
-
         calendar_event::create($event);
     }
 }

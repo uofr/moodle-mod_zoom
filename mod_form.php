@@ -46,6 +46,7 @@ class mod_zoom_mod_form extends moodleform_mod {
     public function definition() {
         global $PAGE, $USER;
         $config = get_config('mod_zoom');
+        $PAGE->requires->js_call_amd("mod_zoom/form", 'init');
         $service = new mod_zoom_webservice();
         $zoomuser = $service->get_user($USER->email);
         if ($zoomuser === false) {
@@ -191,12 +192,21 @@ class mod_zoom_mod_form extends moodleform_mod {
             $mform->addElement('html', get_string('webinar_already_false', 'zoom'));
         }
 
+        // Deals with password manager issues
+        if (isset($this->current->password)) {
+            $this->current->meetingcode = $this->current->password;
+            unset($this->current->password);
+        }
         // Add password.
-        $mform->addElement('passwordunmask', 'password', get_string('password', 'zoom'), array('maxlength' => '10'));
+        $mform->addElement('text', 'meetingcode', get_string('password', 'zoom'), array('maxlength' => '10'));
+        $mform->setType('meetingcode', PARAM_TEXT);
         // Check password uses valid characters.
         $regex = '/^[a-zA-Z0-9@_*-]{1,10}$/';
-        $mform->addRule('password', get_string('err_password', 'mod_zoom'), 'regex', $regex, 'client');
-        $mform->disabledIf('password', 'webinar', 'checked');
+        $mform->addRule('meetingcode', get_string('err_invalid_password', 'mod_zoom'), 'regex', $regex, 'client');
+        $mform->setDefault('meetingcode', strval(rand(100000, 999999)));
+        $mform->disabledIf('meetingcode', 'webinar', 'checked');
+        $mform->addRule('meetingcode', null, 'required', null, 'client');
+        $mform->addElement('static', 'passwordrequirements', '', get_string('err_password', 'mod_zoom'));
 
         // Add host/participants video (checked by default).
         $mform->addGroup(array(
@@ -221,6 +231,10 @@ class mod_zoom_mod_form extends moodleform_mod {
         ), null, get_string('option_audio', 'zoom'));
         $mform->setDefault('option_audio', $config->defaultaudiooption);
 
+        $mform->addElement('advcheckbox', 'option_mute_upon_entry', get_string('option_mute_upon_entry', 'mod_zoom'));
+        $mform->setDefault('option_mute_upon_entry', $config->defaultmuteuponentryoption);
+        $mform->addHelpButton('option_mute_upon_entry', 'option_mute_upon_entry', 'mod_zoom');
+
         // Add meeting options. Make sure we pass $appendName as false
         // so the options aren't nested in a 'meetingoptions' array.
         $mform->addGroup(array(
@@ -228,8 +242,15 @@ class mod_zoom_mod_form extends moodleform_mod {
             $mform->createElement('advcheckbox', 'option_jbh', '', get_string('option_jbh', 'zoom'))
         ), 'meetingoptions', get_string('meetingoptions', 'zoom'), null, false);
         $mform->setDefault('option_jbh', $config->defaultjoinbeforehost);
+
         $mform->addHelpButton('meetingoptions', 'meetingoptions', 'zoom');
         $mform->disabledIf('meetingoptions', 'webinar', 'checked');
+
+        $mform->addElement('advcheckbox', 'option_waiting_room', get_string('option_waiting_room', 'mod_zoom'));
+        $mform->setDefault('option_waiting_room', $config->defaultwaitingroomoption);
+
+        $mform->addElement('advcheckbox', 'option_authenticated_users', get_string('option_authenticated_users', 'mod_zoom'));
+        $mform->setDefault('option_authenticated_users', $config->defaultauthusersoption);
 
         // Add alternative hosts.
         //$mform->addElement('text', 'alternative_hosts', get_string('alternative_hosts', 'zoom'), array('size' => '64'));
@@ -311,6 +332,10 @@ class mod_zoom_mod_form extends moodleform_mod {
             } else if ($data['duration'] > 150 * 60 * 60) {
                 $errors['duration'] = get_string('err_duration_too_long', 'zoom');
             }
+        }
+
+        if (empty($data['meetingcode'])) {
+            $errors['meetingcode'] = get_string('err_password_required', 'mod_zoom');
         }
 
         // Check if the listed alternative hosts are valid users on Zoom.
