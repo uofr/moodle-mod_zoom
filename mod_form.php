@@ -48,18 +48,37 @@ class mod_zoom_mod_form extends moodleform_mod {
         $config = get_config('mod_zoom');
         $PAGE->requires->js_call_amd("mod_zoom/form", 'init');
         $service = new mod_zoom_webservice();
-        $zoomuser = $service->get_user($USER->email);
+		
+		$emailchk = explode('@',$USER->email);
+		
+		if (strpos($emailchk[0],'.')===false) {
+			$zoom_email = strtolower($USER->firstname.''.$USER->lastname.'@'.ZOOM_USER_DOMAIN);
+		} else {
+			$zoom_email = strtolower($USER->email);
+		}
+		
+		//try user with first.last@ZOOM_USER_DOMAIN
+        $zoomuser = $service->get_user($zoom_email);
+		
         if ($zoomuser === false) {
 
-            //if user does not have an account create on for them if within guidelines
             //check if zoom account is under user name instead
             $alias = zoom_email_alias($USER);
 
             //check if alias emails are connected to zoom account
-            $zoomuser = $service->get_user($alias);
+            $zoomuser = $service->get_user(strtolower($alias));
 
             if ($zoomuser === false) {
-
+				
+                // Assume user is using Zoom for the first time/has inproper access
+                $errstring = 'zoomerr_usernotfound';
+                // After they set up their account, the user should continue to the page they were on.
+                $nexturl = $PAGE->url;
+                $langvars = ['url'=>$config->zoomurl];
+                zoom_fatal_error($errstring, 'mod_zoom', $nexturl, $langvars);
+				
+				/*
+            //if user does not have an account create on for them if within guidelines
                 $roles = zoom_get_user_role($USER->id);
                 //check if role is instructor and email is within zoom domain
                 if (in_array("Instructor", $roles) && zoom_email_check($USER->email)) {
@@ -73,6 +92,9 @@ class mod_zoom_mod_form extends moodleform_mod {
                         zoom_fatal_error($errstring, 'mod_zoom', $nexturl, $langvars);
                     }
                 }
+
+				*/
+
             }
 
             // Assume user is using Zoom for the first time.
