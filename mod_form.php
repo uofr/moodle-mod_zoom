@@ -52,13 +52,19 @@ class mod_zoom_mod_form extends moodleform_mod {
 		$emailchk = explode('@',$USER->email);
 		
 		if (strpos($emailchk[0],'.')===false) {
-			$zoom_email = strtolower($USER->firstname.''.$USER->lastname.'@'.ZOOM_USER_DOMAIN);
+			$zoom_email = strtolower($USER->firstname.'.'.$USER->lastname.'@'.ZOOM_USER_DOMAIN);
 		} else {
 			$zoom_email = strtolower($USER->email);
 		}
 		
 		//try user with first.last@ZOOM_USER_DOMAIN
         $zoomuser = $service->get_user($zoom_email);
+		
+		if ($zoomuser === false) {
+			//try titlcase
+			$zoom_email = ucfirst($USER->firstname).'.'.ucfirst($USER->lastname).'@'.ZOOM_USER_DOMAIN;
+			$zoomuser = $service->get_user($zoom_email);
+		}
 		
         if ($zoomuser === false) {
 
