@@ -287,10 +287,6 @@ class mod_zoom_mod_form extends moodleform_mod {
         //$mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
        // $mform->addHelpButton('alternative_hosts', 'alternative_hosts', 'zoom');
 
-
-       
-
-
         //surrounded by a hidden div to open when zoom meeting is clicked.
         $mform->addElement('html', '<div id="id_addcohost"  class="form-group row  fitem" >');
 
