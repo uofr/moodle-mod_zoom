@@ -142,9 +142,8 @@ class mod_zoom_mod_form extends moodleform_mod {
         foreach($teacherarray as $teacher){
             $teachernames[]=$teacher->name;
         }
-       
-           
-        $PAGE->requires->yui_module('moodle-mod_zoom-cohost','M.mod_zoom.cohost.init', array($teacherarray,$cohosts));
+         
+        $PAGE->requires->js_call_amd('mod_zoom/cohost', 'init',[$teacherarray,$cohosts]);
         //end of added
 
         // Start of form definition.

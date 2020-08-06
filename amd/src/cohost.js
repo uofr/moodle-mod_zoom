@@ -1,0 +1,336 @@
+define(['jquery','jqueryui'], function($,jqui) {
+
+
+    function createTag (label) {
+        var div = $('<div class="tag" >'+label+'</div>');
+        
+        const closeIcon = $('<i class="material-icons" data-item = "'+label+'"> close </i>');
+
+        div.append(closeIcon);
+        return div;
+    }
+
+    function clearTags (tagContainer) {
+
+       tags = $(tagContainer).find('.tag');
+        
+       for (var i = 0; i < tags.length; ++i) {
+            $(tags[i]).remove();
+        };
+    }
+
+    function addTags(tagContainer, tagsarray) {
+
+        clearTags(tagContainer);
+
+        var input = $('#id_ac-input');
+
+        for (var i = 0; i < tagsarray.length; ++i) {
+            tagContainer.append(createTag(tagsarray[i].name),input);
+        };
+    }
+
+    function addEmails (tagsarray) {
+    
+        var input = $('#id_cohostid');
+        input.val("");
+        
+        var inputstring ="";
+        for (var i = 0; i < tagsarray.length; ++i) {
+
+            if(tagsarray[i] != "0" && tagsarray[i] != 0  ){
+                inputstring += tagsarray[i].email+',';
+            }
+        };
+
+        if(inputstring != "")
+            input.val(inputstring);
+    }
+
+    function addNewEmail (value) {
+    
+        var input = $('#id_newcohost');
+        inputvalue = input.val();
+        value = value.trim();
+        if(inputvalue ==""){
+            input.val(value);
+        }else{
+            input.val( inputvalue+','+value);
+        }
+    }
+
+    function deleteEmail (value) {
+    
+        var input = $('#id_newcohost');
+        selected = input.val().split(/\s*,\s*/);
+
+        value= value.trim();
+        
+        input.val("");
+
+        for (var i = 0; i < selected.length; ++i) {
+            if(selected[i] !==""){
+                if(selected[i] !== value){
+                    input.val(value+",");
+                }
+            }
+
+        };
+    }
+
+    return {
+        init: function(ogteachers, cohosts) {
+            
+            var tagfill=[];
+            var tagsarray =[];
+
+            //if no cohosts are currently added
+            if(!cohosts){
+                
+                for (var i = 0; i < ogteachers.length; ++i) {
+                    tagfill.push(ogteachers[i].name);
+                }
+                
+            }else{
+                tagsarray = cohosts;
+
+                for (var i = 0; i < ogteachers.length; ++i) {
+                    var contains =false;
+                    for (var j = 0; j < cohosts.length; ++j) {
+                        if(cohosts[j].email == ogteachers[i].email)
+                            contains = true;
+                    }
+                    if(!contains){
+                        tagfill.push(ogteachers[i].name);
+                    }
+                }
+            }
+
+            
+            const tagContainer = $('.tag-container');
+            var child = tagContainer.find('.col-md-3');
+            child.removeClass('col-md-3');
+
+            var inputNode = $('#id_ac-input');
+
+            //clear any input in case of refresh
+            $('#id_newcohost').val("");
+
+            addTags(tagContainer,tagsarray);  
+            addEmails(tagsarray);  
+
+            tagContainer.click(function(){
+                $(inputNode).autocomplete("search", "");
+                inputNode.focus();
+
+            });
+
+            //If Assigned Teacher is switch remove from alternative host options
+            assignNode = $('#id_assign');
+            var previousAssign;
+
+            assignNode.on('focus', function () {
+                // Store the current value on focus and on change
+
+                previousEmail = this.value;
+
+                for (var i = 0; i < ogteachers.length; ++i) {
+                    if(previousEmail == ogteachers[i].email)
+                        previousAssign= ogteachers[i].name;
+                };
+            }).change(function(e) {
+
+                var assignEmail = $(e.target).val();
+
+                for (var i = 0; i < ogteachers.length; ++i) {
+                    if(assignEmail == ogteachers[i].email)
+                        var newHost = ogteachers[i].name;
+                };
+
+                //remove current assigned instructor from list
+                temp=[];
+                for (var i = 0; i < tagfill.length; ++i) {
+                    if($.trim(tagfill[i] )!= $.trim(newHost)){
+                        temp.push(tagfill[i]);
+                    }
+                }
+
+                tagfill = temp;
+
+                //push old assigned instructor to the list
+                if(previousAssign != undefined && jQuery.inArray(previousAssign, tagfill) === -1)
+                    tagfill.push(previousAssign);
+
+                $(inputNode).autocomplete('option', 'source', tagfill);
+
+                //remove new assigned instructor from tagarray if in
+                temp=[];
+                for (var i = 0; i < tagsarray.length; ++i) {
+                    if(tagsarray[i].name != newHost)
+                        temp.push(tagsarray[i]);
+                }
+
+                tagsarray =temp;
+
+                addTags(tagContainer,tagsarray);    
+                addEmails(tagsarray);
+
+            });
+
+
+            $("body").click( function (e) {
+
+                if (e.target.tagName === 'I') {
+                    var tagLabel = e.target.getAttribute('data-item');
+                    var contains =true;
+
+                    for (var i = 0; i < tagfill.length; ++i) {
+
+                        if(tagfill[i]===tagLabel)
+                            contains = false;
+                    };
+
+                    if(contains){
+                        tagfill.push(tagLabel);
+                    }
+
+                    temp=[];
+                    for (var i = 0; i < tagsarray.length; ++i) {
+                    
+                        if(tagsarray[i].name !== tagLabel){
+                            temp.push(tagsarray[i]);
+                        }else{
+                            //clear email if match and email is 0
+                            if(tagsarray[i].email==0){
+                                deleteEmail(tagsarray[i].name);
+                            }
+                        }
+                    }
+
+                    tagsarray = temp;
+    
+                    addTags(tagContainer,tagsarray);    
+                    addEmails(tagsarray);
+                    $(inputNode).autocomplete("search", "");
+                    inputNode.focus();
+
+                }
+
+                //if anything has been typed in added it to the tag
+
+                newtag = $(inputNode).val();
+                if(newtag != ""){
+                  
+                    //check if already in array
+                    var contains = false;
+                    for (var i = 0; i < tagsarray.length; ++i) {
+                        if(tagsarray[i].name == newtag){
+                            contains =true;
+                        }
+                    }
+
+                    //if not then push it 
+                    if(!contains){
+                       
+                        tagsarray.push({email: 0, name: newtag}); 
+                        addTags(tagContainer,tagsarray);
+                        addEmails(tagsarray);
+                        addNewEmail(newtag); 
+                    }
+                    inputNode.val("");
+                }
+            });
+
+          
+            // When the input node receives focus, send an empty query to display the full
+            // list of tag suggestions.
+            inputNode.on('keyup', function(e) {
+                
+                //on space bar click
+                if (e.keyCode == 32) {
+
+                    newtag = $(e.target).val();
+                    tagsarray.push({email: 0, name: newtag});
+                    
+                    addTags(tagContainer,tagsarray);
+                    addEmails(tagsarray);
+                    addNewEmail(newtag);
+                    inputNode.val("");
+                }else if(e.keyCode == 8 || e.keyCode == 46){
+                    if($(e.target).val() == "" && tagsarray !=0){
+
+                        var tagLabel = tagsarray[tagsarray.length-1];
+
+                        //remove last tag in view
+                        tagfill.push(tagLabel.name);
+                        $(inputNode).autocomplete('option', 'source', tagfill);
+                    
+                        tagsarray.splice(-1,1)
+
+                        addTags(tagContainer,tagsarray);    
+                        addEmails(tagsarray);
+                        inputNode.focus();
+                    }
+                } else if(e.keyCode == 13) {
+                    if($(inputNode).val().length==0) {
+                        inputNode.focus();
+                        event.preventDefault();
+                        return false;
+                    }
+                  }
+            });
+
+
+            $(inputNode).autocomplete({
+                source: tagfill,
+                minLength: 0,
+                autoFocus: true,
+                select: function(event, ui) {
+    
+                    value = ui.item.value;
+            
+                    if (value != "") {
+                            
+                        var contains =true;
+                        for (var i = 0; i < tagsarray.length; ++i) {
+                            if(tagsarray.name===value)
+                                contains= false;
+                        };
+
+                        if(contains){
+                            //Go through og array to find teacher ids to attach
+                            teacheremail="0";
+
+                            for (var i = 0; i < ogteachers.length; ++i) {
+                                if(ogteachers[i].name === value)
+                                    teacheremail = ogteachers[i].email
+                            };
+
+                            temp=[];
+
+                            tagfill = jQuery.grep(tagfill, function(element) {
+                                return element != value;
+                            }); 
+
+                            $(inputNode).autocomplete('option', 'source', tagfill);
+
+                            tagsarray.push({email: teacheremail, name: value});
+                            
+                            addTags(tagContainer,tagsarray);
+                            addEmails(tagsarray);
+                            inputNode.val("");
+                        }
+                    }
+                    inputNode.val("");  
+                    inputNode.focus();
+                    $(inputNode).autocomplete("search", "");
+
+                    return false;
+                },
+              }).focus(function () {
+                $(this).autocomplete("search");
+            });
+        }
+    };
+
+});
