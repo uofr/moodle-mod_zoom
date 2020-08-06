@@ -49,68 +49,19 @@ class mod_zoom_mod_form extends moodleform_mod {
         $PAGE->requires->js_call_amd("mod_zoom/form", 'init');
         $service = new mod_zoom_webservice();
 		
-		$emailchk = explode('@',$USER->email);
-		
-		if (strpos($emailchk[0],'.')===false) {
-			$zoom_email = strtolower($USER->firstname.'.'.$USER->lastname.'@'.ZOOM_USER_DOMAIN);
-		} else {
-			$zoom_email = strtolower($USER->email);
-		}
-		
-		//try user with first.last@ZOOM_USER_DOMAIN
-        $zoomuser = $service->get_user($zoom_email);
-		
-		if ($zoomuser === false) {
-			//try titlcase
-			$zoom_email = ucfirst($USER->firstname).'.'.ucfirst($USER->lastname).'@'.ZOOM_USER_DOMAIN;
-			$zoomuser = $service->get_user($zoom_email);
-		}
+		$zoomuser = zoom_get_user_zoomemail($USER,$service);
 		
         if ($zoomuser === false) {
-
-            //check if zoom account is under user name instead
-            $alias = zoom_email_alias($USER);
-
-            //check if alias emails are connected to zoom account
-            $zoomuser = $service->get_user(strtolower($alias));
-
-            if ($zoomuser === false) {
-				
-                // Assume user is using Zoom for the first time/has inproper access
-                $errstring = 'zoomerr_usernotfound';
-                // After they set up their account, the user should continue to the page they were on.
-                $nexturl = $PAGE->url;
-                $langvars = ['url'=>$config->zoomurl];
-                zoom_fatal_error($errstring, 'mod_zoom', $nexturl, $langvars);
-				
-				/*
-            //if user does not have an account create on for them if within guidelines
-                $roles = zoom_get_user_role($USER->id);
-                //check if role is instructor and email is within zoom domain
-                if (in_array("Instructor", $roles) && zoom_email_check($USER->email)) {
-                    $created = $service->autocreate_user($USER);
-                    if(!$created){
-                        // Assume user is using Zoom for the first time/has inproper access
-                        $errstring = 'zoomerr_usernotfound';
-                        // After they set up their account, the user should continue to the page they were on.
-                        $nexturl = $PAGE->url;
-                        $langvars = ['email'=>$USER->email,'url'=>$config->zoomurl];
-                        zoom_fatal_error($errstring, 'mod_zoom', $nexturl, $langvars);
-                    }
-                }
-
-				*/
-
-            }
-
-            // Assume user is using Zoom for the first time.
-            //$errstring = 'zoomerr_usernotfound';
+			
+            // Assume user is using Zoom for the first time/has inproper access
+            $errstring = 'zoomerr_usernotfound';
             // After they set up their account, the user should continue to the page they were on.
-           // $nexturl = $PAGE->url;
-			//$langvars = ['email'=>$USER->email,'url'=>$config->zoomurl];
-            //zoom_fatal_error($errstring, 'mod_zoom', $nexturl, $langvars);
-        }
+            $nexturl = $PAGE->url;
+            $langvars = ['url'=>$config->zoomurl];
+            zoom_fatal_error($errstring, 'mod_zoom', $nexturl, $langvars);
 
+        }
+		
         // If updating, ensure we can get the meeting on Zoom.
         $isnew = empty($this->_cm);
         if (!$isnew) {
@@ -135,8 +86,9 @@ class mod_zoom_mod_form extends moodleform_mod {
         $teacherarray = zoom_get_course_instructors($this->_course->id);
         //get list of co-hosts already added, if none false is returned
         $cohosts=false;
-        if(!$isnew)
-            $cohosts = zoom_get_alternative_hosts($this->current->id);
+        if(!$isnew) {
+            $cohosts = zoom_get_alternative_hosts($this->current->id,$service);
+        }
 
         $teachernames=[];
         foreach($teacherarray as $teacher){
