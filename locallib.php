@@ -263,6 +263,46 @@ function zoom_get_user_id($required = true) {
     return $zoomuserid;
 }
 
+function zoom_get_user_zoomemail($user,$service) {
+
+    $config = get_config('mod_zoom');
+	
+	$emailchk = explode('@',$user->email);
+	
+	if (strpos($emailchk[0],'.')===false) {
+		$zoom_email = strtolower($user->firstname.'.'.$user->lastname.'@'.ZOOM_USER_DOMAIN);
+	} else {
+		$zoom_email = strtolower($user->email);
+	}
+	
+	//try user with first.last@ZOOM_USER_DOMAIN
+    $zoomuser = $service->get_user($zoom_email);
+	
+	if ($zoomuser === false) {
+		//try titlcase
+		$zoom_email = ucfirst($user->firstname).'.'.ucfirst($user->lastname).'@'.ZOOM_USER_DOMAIN;
+		$zoomuser = $service->get_user($zoom_email);
+	}
+	
+    if ($zoomuser === false) {
+
+        //check if zoom account is under user name instead
+        $alias = zoom_email_alias($user);
+
+        //check if alias emails are connected to zoom account
+        $zoomuser = $service->get_user(strtolower($alias));
+
+        if ($zoomuser === false) {
+			
+           return false;
+
+        }
+
+    }
+	
+	return $zoomuser;
+}
+
 /**
  * Check if the error indicates that a meeting is gone.
  *
@@ -362,7 +402,7 @@ function zoom_get_course_instructors($courseid) {
  * @param string $detailsid The meeting ID that you want to get the participants report for.
  * @return array The user data as an array of records (array of arrays).
  */
-function zoom_get_alternative_hosts($zoomid) {
+function zoom_get_alternative_hosts($zoomid,$service) {
     global $DB;
   
     $zoom  = $DB->get_record('zoom', array('id' => $zoomid), '*', MUST_EXIST);
@@ -373,8 +413,11 @@ function zoom_get_alternative_hosts($zoomid) {
         if($cohost != ""){
             $user = zoom_get_user_info(trim($cohost));
             $usertemp=new stdClass;
-            $usertemp->email = $user->email;
-            $usertemp->name = fullname($user);
+            
+			$usertemp->name = fullname($user);
+			
+            $usertemp->email = zoom_get_user_zoomemail($user,$service);
+            
             $users[] = $usertemp;
         }
     }
@@ -395,6 +438,14 @@ function zoom_get_user_info($email){
     global $DB;
 
     $user = $DB->get_record('user', array('email' => $email), '*', MUST_EXIST);
+
+	$emailchk = explode('@',$email);
+	
+	if (!$user&&strpos($emailchk[0],'.')===false) {
+		//check by username?
+		$user = $DB->get_record('user', array('username' => $emailpcs[0]), '*', MUST_EXIST);
+	}
+	
     return $user;
 }
 
