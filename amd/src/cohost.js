@@ -328,6 +328,8 @@ define(['jquery','jqueryui'], function($,jqui) {
                 select: function(event, ui) {
     
                     value = ui.item.value;
+
+		            var tagsarray =[];
             
                     if (value != "") {
                             
