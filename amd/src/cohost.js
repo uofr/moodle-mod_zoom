@@ -1,6 +1,11 @@
 define(['jquery','jqueryui'], function($,jqui) {
 
-
+    /**
+     * Create tag for container
+     *
+     * @param string name of co-host
+     * @return node of tag
+     */
     function createTag (label) {
         var div = $('<div class="tag" >'+label+'</div>');
         
@@ -10,6 +15,11 @@ define(['jquery','jqueryui'], function($,jqui) {
         return div;
     }
 
+    /**
+     * Clear all tags from container
+     *
+     * @param node alternative host container
+     */
     function clearTags (tagContainer) {
 
        tags = $(tagContainer).find('.tag');
@@ -19,6 +29,12 @@ define(['jquery','jqueryui'], function($,jqui) {
         };
     }
 
+      /**
+     * Add tags to node container
+     *
+     * @param node container for alternative emails
+     * @param object array of nodes {email:,name:} to be made into tags
+     */
     function addTags(tagContainer, tagsarray) {
 
         clearTags(tagContainer);
@@ -30,6 +46,11 @@ define(['jquery','jqueryui'], function($,jqui) {
         };
     }
 
+      /**
+     * Add emails selected into hidden import for form processing
+     *
+     * @param object array of nodes {email:,name:} to be made into tags
+     */
     function addEmails (tagsarray) {
     
         var input = $('#id_cohostid');
@@ -38,7 +59,7 @@ define(['jquery','jqueryui'], function($,jqui) {
         var inputstring ="";
         for (var i = 0; i < tagsarray.length; ++i) {
 
-            if(tagsarray[i] != "0" && tagsarray[i] != 0  ){
+            if(tagsarray[i]!= "0" && tagsarray[i] != 0  ){
                 inputstring += tagsarray[i].email+',';
             }
         };
@@ -47,18 +68,11 @@ define(['jquery','jqueryui'], function($,jqui) {
             input.val(inputstring);
     }
 
-    function addNewEmail (value) {
-    
-        var input = $('#id_newcohost');
-        inputvalue = input.val();
-        value = value.trim();
-        if(inputvalue ==""){
-            input.val(value);
-        }else{
-            input.val( inputvalue+','+value);
-        }
-    }
-
+        /**
+     * Remove email from hidden import for form processing
+     *
+     * @param string email of deleted tag
+     */
     function deleteEmail (value) {
     
         var input = $('#id_newcohost');
@@ -74,7 +88,6 @@ define(['jquery','jqueryui'], function($,jqui) {
                     input.val(value+",");
                 }
             }
-
         };
     }
 
@@ -83,17 +96,47 @@ define(['jquery','jqueryui'], function($,jqui) {
             
             var tagfill=[];
             var tagsarray =[];
+            tagfill.length=0;
 
-            //if no cohosts are currently added
-            if(!cohosts){
-                
+            //check if anything is in hidden element if so add to tag array and fill tagfill with og
+            var cohostNode = $('#id_cohostid').val();
+
+            if(cohostNode.length !=0){
+                var cohostsInput = cohostNode.split(/\s*,\s*/);
+
+                //for any emails in node
+                for (var i = 0; i < cohostsInput.length; ++i) {
+                    //Go through og array to find teacher ids to attach
+                    if(cohostsInput[i] !=""){
+                        name =cohostsInput[i];
+
+                        for (var j = 0; j < ogteachers.length; ++j) {
+
+                            if(ogteachers[j].email === cohostsInput[i])
+                                name = ogteachers[j].name
+                        };
+                        tagsarray.push({email: cohostsInput[i], name: name});
+                    }
+                }
+               
+                //compare tags that are in the container, add to drop down list if not a tag
+                for (var i = 0; i < ogteachers.length; ++i) {
+                    contains=false;
+                    for (var j = 0; j < tagsarray.length; ++j) {
+
+                        if(tagsarray[j].email == ogteachers[i].email)
+                            contains = true;
+                    }
+                    if(!contains)
+                        tagfill.push(ogteachers[i].name);  
+                }
+            }else if(cohosts.length ==0){
+                //if no cohosts are currently added 
                 for (var i = 0; i < ogteachers.length; ++i) {
                     tagfill.push(ogteachers[i].name);
-                }
-                
-            }else{
+                }     
+            }else{ //if cohosts are already in zoom meeting (if editng meeting)
                 tagsarray = cohosts;
-
                 for (var i = 0; i < ogteachers.length; ++i) {
                     var contains =false;
                     for (var j = 0; j < cohosts.length; ++j) {
@@ -115,10 +158,10 @@ define(['jquery','jqueryui'], function($,jqui) {
 
             //clear any input in case of refresh
             $('#id_newcohost').val("");
-
             addTags(tagContainer,tagsarray);  
             addEmails(tagsarray);  
 
+            //if container is clicked show drop down list
             tagContainer.click(function(){
                 $(inputNode).autocomplete("search", "");
                 inputNode.focus();
@@ -131,7 +174,6 @@ define(['jquery','jqueryui'], function($,jqui) {
 
             assignNode.on('focus', function () {
                 // Store the current value on focus and on change
-
                 previousEmail = this.value;
 
                 for (var i = 0; i < ogteachers.length; ++i) {
@@ -154,7 +196,7 @@ define(['jquery','jqueryui'], function($,jqui) {
                         temp.push(tagfill[i]);
                     }
                 }
-
+                
                 tagfill = temp;
 
                 //push old assigned instructor to the list
@@ -180,6 +222,7 @@ define(['jquery','jqueryui'], function($,jqui) {
 
             $("body").click( function (e) {
 
+                //check if it is a node being removed
                 if (e.target.tagName === 'I') {
                     var tagLabel = e.target.getAttribute('data-item');
                     var contains =true;
@@ -207,17 +250,16 @@ define(['jquery','jqueryui'], function($,jqui) {
                         }
                     }
 
+                    //add any typed input into tags 
                     tagsarray = temp;
     
                     addTags(tagContainer,tagsarray);    
                     addEmails(tagsarray);
                     $(inputNode).autocomplete("search", "");
                     inputNode.focus();
-
                 }
 
                 //if anything has been typed in added it to the tag
-
                 newtag = $(inputNode).val();
                 if(newtag != ""){
                   
@@ -231,11 +273,9 @@ define(['jquery','jqueryui'], function($,jqui) {
 
                     //if not then push it 
                     if(!contains){
-                       
-                        tagsarray.push({email: 0, name: newtag}); 
+                        tagsarray.push({email: newtag, name: newtag}); 
                         addTags(tagContainer,tagsarray);
                         addEmails(tagsarray);
-                        addNewEmail(newtag); 
                     }
                     inputNode.val("");
                 }
@@ -250,11 +290,11 @@ define(['jquery','jqueryui'], function($,jqui) {
                 if (e.keyCode == 32) {
 
                     newtag = $(e.target).val();
-                    tagsarray.push({email: 0, name: newtag});
+                    tagsarray.push({email: newtag, name: newtag});
                     
                     addTags(tagContainer,tagsarray);
                     addEmails(tagsarray);
-                    addNewEmail(newtag);
+                  
                     inputNode.val("");
                 }else if(e.keyCode == 8 || e.keyCode == 46){
                     if($(e.target).val() == "" && tagsarray !=0){
@@ -271,7 +311,7 @@ define(['jquery','jqueryui'], function($,jqui) {
                         addEmails(tagsarray);
                         inputNode.focus();
                     }
-                } else if(e.keyCode == 13) {
+                } else if(e.keyCode == 13) { //if enter key is clicked prevent form from submitting if in node
                     if($(inputNode).val().length==0) {
                         inputNode.focus();
                         event.preventDefault();
@@ -299,7 +339,7 @@ define(['jquery','jqueryui'], function($,jqui) {
 
                         if(contains){
                             //Go through og array to find teacher ids to attach
-                            teacheremail="0";
+                            teacheremail=value;
 
                             for (var i = 0; i < ogteachers.length; ++i) {
                                 if(ogteachers[i].name === value)
@@ -307,7 +347,7 @@ define(['jquery','jqueryui'], function($,jqui) {
                             };
 
                             temp=[];
-
+        
                             tagfill = jQuery.grep(tagfill, function(element) {
                                 return element != value;
                             }); 

@@ -415,9 +415,8 @@ function zoom_get_alternative_hosts($zoomid,$service) {
             $usertemp=new stdClass;
             
 			$usertemp->name = fullname($user);
-			
-            $usertemp->email = zoom_get_user_zoomemail($user,$service);
-            
+            $usertemp->email = $cohost;
+         
             $users[] = $usertemp;
         }
     }
@@ -477,7 +476,7 @@ function zoom_get_user_role($id){
     $context = context_course::instance($COURSE->id);
     $roles = get_user_roles($context, $id);
     foreach ($roles as $role) {
-        $rolestr[] = role_get_name($role, $context);
+        $rolestr[] = $role->shortname;
     }
     
     return $rolestr;

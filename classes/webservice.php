@@ -466,6 +466,59 @@ class mod_zoom_webservice {
     }
 
     /**
+     * Upgrade a zoom users account
+     * Take a host_id of user and upgrade account from basic to pro
+     * depending on if licenses are available
+     *
+     * @param stdClass $zoom user object
+     * @return stdClass false or true if account was upgraded
+     */
+    public function upgrade_user($user) {
+
+        if($user->type == ZOOM_USER_TYPE_BASIC){
+            // Checks whether we need to recycle licenses and acts accordingly.
+            if ($this->recyclelicenses) {
+                if ($this->_paid_user_limit_reached()) {
+                    $leastrecentlyactivepaiduserid = $this->_get_least_recently_active_paid_user_id();
+                    // Changes least_recently_active_user to a basic user so we can use their license.
+                    try{
+                        $this->_make_call("users/$leastrecentlyactivepaiduserid", array('type' => ZOOM_USER_TYPE_BASIC), 'patch');
+                    }catch(moodle_exception $error) {
+                        throw $error;
+                    }
+                }
+                // Changes current user to pro so they can make a meeting.
+                try {
+                    $this->_make_call("users/$user->id", array('type' => ZOOM_USER_TYPE_PRO), 'patch');
+                } catch (moodle_exception $error) {
+                    // If the user already exists, the error will contain 'User does not exist'.
+                    if (strpos($error->getMessage(), 'User does not exist') === true) {
+                        return false;
+                    } else {
+                        throw $error;
+                    }
+                }
+                return true;
+            }else{
+
+                try {
+                    $this->_make_call("users/$user->id", array('type' => ZOOM_USER_TYPE_PRO), 'patch');
+                } catch (moodle_exception $error) {
+                    // If the user already exists, the error will contain 'User does not exist'.
+                    if (strpos($error->getMessage(), 'User does not exist') === true) {
+                        return false;
+                    } else {
+                        throw $error;
+                    }
+                }
+                return true;
+            }
+        }else{
+            return false;
+        }
+    }
+
+    /**
      * Update a meeting/webinar on Zoom.
      *
      * @param stdClass $zoom The meeting to update.
