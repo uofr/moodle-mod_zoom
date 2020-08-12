@@ -56,6 +56,7 @@ $string['duration'] = 'Duration (minutes)';
 $string['endtime'] = 'End time';
 $string['err_account_creation'] = ' was not found on Zoom. Account could not be created.';
 $string['err_account_invalid'] = ' was not found on Zoom.';
+$string['err_account_basic'] = ' needs to be a PRO account on Zoom to be an alternative host.';
 $string['err_duration_nonpositive'] = 'The duration must be positive.';
 $string['err_duration_too_long'] = 'The duration cannot exceed 150 hours.';
 $string['err_email_invalid'] = 'Invalid email entered.';

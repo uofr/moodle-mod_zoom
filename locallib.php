@@ -436,13 +436,13 @@ function zoom_get_user_info($email){
 
     global $DB;
 
-    $user = $DB->get_record('user', array('email' => $email), '*', MUST_EXIST);
+    $user = $DB->get_record('user', array('email' => $email), '*', IGNORE_MISSING);
 
 	$emailchk = explode('@',$email);
 	
-	if (!$user&&strpos($emailchk[0],'.')===false) {
+	if (!$user && strpos($emailchk[0],'.')===false) {
 		//check by username?
-		$user = $DB->get_record('user', array('username' => $emailpcs[0]), '*', MUST_EXIST);
+		$user = $DB->get_record('user', array('username' => $emailchk[0]), '*', IGNORE_MISSING);
 	}
 	
     return $user;
@@ -497,6 +497,7 @@ function zoom_email_check($email){
     else
         return false;
 }
+
 /**
 * Check if user has any alias emails connected to account
 * @param int $email of user

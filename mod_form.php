@@ -250,10 +250,10 @@ class mod_zoom_mod_form extends moodleform_mod {
         $mform->addElement('html', '</div>');
            
         $mform->addElement('html', '<div class="col-md-9" >');
-        $mform->addElement('html', '<div id="demo" class="  yui3-skin-sam tag-container" >');
+        $mform->addElement('html', '<div id="demo" class="  yui3-skin-sam tag-container border" >');
            
-        
-        $mform->addElement('text', 'ac-input', '');
+        $placeholder=array('placeholder' => 'Enter email');
+        $mform->addElement('text', 'ac-input', '',$placeholder);
            
         $mform->addElement('html', '</div>');
         $mform->addElement('html', '</div>');
@@ -336,9 +336,9 @@ class mod_zoom_mod_form extends moodleform_mod {
                 //check if provided emails or alias emails are connected to zoom accounts
                 if (!($service->get_user($useremail)) && !($service->get_user($alias))) {
 
-                    $roles = zoom_get_user_role($user->id);
+                    //$roles = zoom_get_user_role($user->id);
                     //check if role is instructor and email is within zoom domain
-                    if (in_array("Instructor", $roles) && zoom_email_check($useremail)) {
+                    if (zoom_email_check($useremail)) {
                         $created = $service->autocreate_user($user);
                         if(!$created){
                             $errors['assign'] = $useremail.get_string('err_account_creation', 'mod_zoom');
@@ -356,21 +356,30 @@ class mod_zoom_mod_form extends moodleform_mod {
                 //check if all emails have valid format
                  if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
-                    $user = zoom_get_user_info($email);
-                    $roles = zoom_get_user_role($user->id);
-
-                    //check if zoom account is under user name instead
-                    $alias = zoom_email_alias($user);
-
+                    $roles=false;
                     $zoomuser = $service->get_user($email);
-                    if(!$zoomuser){
-                        $zoomuser = $service->get_user($alias);
+                    $user = zoom_get_user_info($email);
+
+                    if($user){
+                        $roles = zoom_get_user_role($user->id);
+                        //check if zoom account is under user name instead
+                        $alias = zoom_email_alias($user);
+
+                        if(!$zoomuser){
+                            $zoomuser = $service->get_user($alias);
+                        }
                     }
 
+
+                    if(!$zoomuser && !$user){
+                        $errors['ac-input'] = $email.get_string('err_account_invalid', 'mod_zoom');
+                            break;
+
                     //check if provided emails or alias emails are connected to zoom accounts
-                    if (!$zoomuser) {
+                    }else if (!$zoomuser && $user) {
                         //check if role is instructor and email is within zoom domain
-                        if ((in_array("editingteacher", $roles) || in_array("teacher", $roles)  )&& zoom_email_check($email)) {
+                        
+                        if ((in_array("editingteacher", $roles) || in_array("teacher", $roles))&& zoom_email_check($email)) {
                            //attempt to create account for cohost
                             $created = $service->autocreate_user($user);
                            
@@ -384,19 +393,24 @@ class mod_zoom_mod_form extends moodleform_mod {
                         }
                     }else{
                         //check type of user, must be paid to be co-host 
-                        if($zoomuser->type == ZOOM_USER_TYPE_BASIC){
+                        if($zoomuser->type == ZOOM_USER_TYPE_BASIC ){
                         
-                            //upgrade if necessay
-                            if ((in_array("editingteacher", $roles) || in_array("teacher", $roles)  )&& zoom_email_check($email)) {
+                            if($user){
+                                //upgrade if necessay
+                                if ((in_array("editingteacher", $roles) || in_array("teacher", $roles)  )&& zoom_email_check($email)) {
 
-                                $upgraded = $service->upgrade_user($zoomuser);
+                                    $upgraded = $service->upgrade_user($zoomuser);
 
-                                if(!$upgraded){
-                                    $errors['ac-input'] = $email.get_string('err_account_creation', 'mod_zoom');
+                                    if(!$upgraded){
+                                        $errors['ac-input'] = $email.get_string('err_account_creation', 'mod_zoom');
+                                        break;
+                                    }
+                                }else{
+                                    $errors['ac-input'] = $email.get_string('err_account_invalid', 'mod_zoom');
                                     break;
                                 }
                             }else{
-                                $errors['ac-input'] = $email.get_string('err_account_invalid', 'mod_zoom');
+                                $errors['ac-input'] = $email.get_string('err_account_basic', 'mod_zoom');
                                 break;
                             }
                         }

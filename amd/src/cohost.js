@@ -46,6 +46,22 @@ define(['jquery','jqueryui'], function($,jqui) {
         };
     }
 
+    function createAlert(inputstring){
+
+        var span = " Warning: "+inputstring+ " should have a licensed or pro Zoom account to be an alternate host.\n";
+
+        if($("#alternative_host_alert").length){
+            //$("#alternative_host_alert").text(inputstring);
+            $("#alternative_host_alert").append('<span id='+inputstring+'>'+span+'</span>');
+
+        }else{
+            $('.tag-container').after(
+            '<div id="alternative_host_alert" class="alert alert-warning\" role="alert">'+
+            '<span id='+inputstring+'>'
+            
+            +span+'</span></div>');
+        }
+    }
       /**
      * Add emails selected into hidden import for form processing
      *
@@ -54,18 +70,28 @@ define(['jquery','jqueryui'], function($,jqui) {
     function addEmails (tagsarray) {
     
         var input = $('#id_cohostid');
-        input.val("");
-        
+        input.val(""); 
         var inputstring ="";
+        $("#alternative_host_alert").empty();
+       
         for (var i = 0; i < tagsarray.length; ++i) {
-
             if(tagsarray[i]!= "0" && tagsarray[i] != 0  ){
                 inputstring += tagsarray[i].email+',';
+                res = tagsarray[i].email.split("@");
+                if(res[1]!= "uregina.ca"){
+                    createAlert(tagsarray[i].email);
+                }
             }
-        };
+        }
 
         if(inputstring != "")
             input.val(inputstring);
+            
+            if($("#alternative_host_alert").length ){
+                if($("#alternative_host_alert").children().length <= 0){
+                        $("#alternative_host_alert").remove();
+                }
+            }
     }
 
         /**
@@ -88,7 +114,15 @@ define(['jquery','jqueryui'], function($,jqui) {
                     input.val(value+",");
                 }
             }
-        };
+        }
+
+        if($("#"+value).length)
+        {
+            $("#"+value).remove();
+           if($("#alternative_host_alert").children().length <= 0){
+                $("#alternative_host_alert").remove();
+           }
+        }
     }
 
     return {
@@ -97,6 +131,8 @@ define(['jquery','jqueryui'], function($,jqui) {
             var tagfill=[];
             var tagsarray =[];
             tagfill.length=0;
+
+
 
             //check if anything is in hidden element if so add to tag array and fill tagfill with og
             var cohostNode = $('#id_cohostid').val();
@@ -153,6 +189,12 @@ define(['jquery','jqueryui'], function($,jqui) {
             const tagContainer = $('.tag-container');
             var child = tagContainer.find('.col-md-3');
             child.removeClass('col-md-3');
+             //check if error has been sent back for alternative host
+             if($('#id_error_ac-input').css('display') == 'block'){
+                tagContainer.addClass("border-danger");
+            }else{
+                tagContainer.removeClass("border-danger");
+            }
 
             var inputNode = $('#id_ac-input');
 
