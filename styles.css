@@ -205,3 +205,4 @@ html .ui-autocomplete { width:1px; } /* without this, the menu expands to 100% i
     background: #eee;
     cursor: pointer;
 }
+.ui-helper-hidden-accessible{display:none;}
