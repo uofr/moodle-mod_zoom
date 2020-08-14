@@ -362,10 +362,9 @@ class mod_zoom_mod_form extends moodleform_mod {
 
                     if($user){
                         $roles = zoom_get_user_role($user->id);
-                        //check if zoom account is under user name instead
-                        $alias = zoom_email_alias($user);
-
                         if(!$zoomuser){
+                            //check if zoom account is under user name instead
+                            $alias = zoom_email_alias($user);
                             $zoomuser = $service->get_user($alias);
                         }
                     }

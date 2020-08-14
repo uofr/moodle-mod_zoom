@@ -470,15 +470,21 @@ function zoom_get_user($id){
 */
 function zoom_get_user_role($id){
 
-    global $COURSE;
+    global $DB;
 
     $rolestr = array();
-    $context = context_course::instance($COURSE->id);
-    $roles = get_user_roles($context, $id);
-    foreach ($roles as $role) {
-        $rolestr[] = $role->shortname;
+   
+    $roleassignments = $DB->get_records_sql("
+      SELECT ra.roleid
+      FROM {role_assignments} ra
+      WHERE ra.userid = ".$id.";");
+
+    foreach($roleassignments as $role){
+
+        $rolename = $DB->get_record('role', ['id' => $role->roleid]);
+        $rolestr[]=$rolename->shortname;
     }
-    
+
     return $rolestr;
 }
 
