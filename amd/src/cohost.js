@@ -388,6 +388,10 @@ define(['jquery','jqueryui'], function($,jqui) {
                                 if(ogteachers[i].name === value)
                                     teacheremail = ogteachers[i].email
                             };
+                            for (var i = 0; i < cohosts.length; ++i) {
+                                if(cohosts[i].name === value)
+                                    teacheremail = cohosts[i].email
+                            };
 
                             temp=[];
         
@@ -398,6 +402,9 @@ define(['jquery','jqueryui'], function($,jqui) {
                             $(inputNode).autocomplete('option', 'source', tagfill);
 
 
+                            if(!tagsarray){
+                                tagsarray = [];
+                            }
                             tagsarray.push({email: teacheremail, name: value});
                             
                             addTags(tagContainer,tagsarray);

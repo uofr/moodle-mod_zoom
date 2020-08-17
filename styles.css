@@ -137,14 +137,6 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  .whiteout{
-      color:#FFF !important;
-      display: none !important;
-  }
-
-  .hidden{
-    display: none !important;
-}
 .ui-autocomplete { 
   position: absolute; 
   cursor: default; 
