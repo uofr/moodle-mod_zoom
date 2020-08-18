@@ -152,6 +152,9 @@ define(['jquery','jqueryui'], function($,jqui) {
                             if(ogteachers[j].email === cohostsInput[i])
                                 name = ogteachers[j].name
                         };
+                        if(!tagsarray){
+                            tagsarray = [];
+                        }
                         tagsarray.push({email: cohostsInput[i], name: name});
                     }
                 }
@@ -316,6 +319,9 @@ define(['jquery','jqueryui'], function($,jqui) {
 
                     //if not then push it 
                     if(!contains){
+                        if(!tagsarray){
+                            tagsarray = [];
+                        }
                         tagsarray.push({email: newtag, name: newtag}); 
                         addTags(tagContainer,tagsarray);
                         addEmails(tagsarray);
@@ -333,6 +339,9 @@ define(['jquery','jqueryui'], function($,jqui) {
                 if (e.keyCode == 32) {
 
                     newtag = $(e.target).val();
+                    if(!tagsarray){
+                        tagsarray = [];
+                    }
                     tagsarray.push({email: newtag, name: newtag});
                     
                     addTags(tagContainer,tagsarray);
