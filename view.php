@@ -166,7 +166,14 @@ if ($iszoommanager) {
 
     // Display alternate hosts if they exist.
     if (!empty($zoom->alternative_hosts)) {
-        $table->data[] = array(get_string('alternative_hosts', 'mod_zoom'), $zoom->alternative_hosts);
+		// should link email addresses to be web friendly
+		$althostsformatted = array();
+		$althostemails = explode(',',$zoom->alternative_hosts);
+		foreach ($althostemails as $althost) {
+			$althostsformatted[] = '<a href="mailto:'.$althost.'">'.$althost.'</a>';
+		}
+
+        $table->data[] = array(get_string('alternative_hosts', 'mod_zoom'), implode(', ', $althostsformatted));
     }
 }
 
