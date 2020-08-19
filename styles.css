@@ -59,24 +59,20 @@
     box-shadow: 0 0 4px rgba(0, 0, 0, 0.2), inset 0 1px 1px #fff;*/
     
     cursor: pointer;
-    padding: 1px !important;
+    padding: 0.15em 0.5em 0.5em 1em !important;
     min-height: 0 !important;
     max-height: none !important;
     max-width: 100% !important;
     margin: 5px !important;
     text-indent: 0 !important;
     border: 0 none !important;
-
+	border-radius: 0.25em;
     line-height: inherit !important;
     -webkit-user-select: auto !important;
     -webkit-box-shadow: none !important;
     box-shadow: none !important;
     background: #eee;
     color: #333;
-
-
-
-
   }
   .tag-container .tag:focus{
     background: #1177d1;
@@ -135,6 +131,11 @@
     direction: ltr;
     -webkit-font-feature-settings: 'liga';
     -webkit-font-smoothing: antialiased;
+  }
+
+  .whiteout{
+      color:#FFF !important;
+      display: none !important;
   }
 
 .ui-autocomplete { 
@@ -198,3 +199,11 @@ html .ui-autocomplete { width:1px; } /* without this, the menu expands to 100% i
     cursor: pointer;
 }
 .ui-helper-hidden-accessible{display:none;}
+
+
+#id_ac-input {
+	font-family: sans-serif;
+}
+#id_ac-input.form-control::placeholder {
+	color: #aaa;
+}
