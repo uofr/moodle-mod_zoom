@@ -42,25 +42,37 @@ define(['jquery','jqueryui'], function($,jqui) {
         var input = $('#id_ac-input');
 
         for (var i = 0; i < tagsarray.length; ++i) {
-            tagContainer.append(createTag(tagsarray[i].name),input);
+            tagContainer.append(createTag(tagsarray[i].email),input);
         };
     }
 
-    function createAlert(inputstring){
-
-        var span = " Warning: "+inputstring+ " should have a licensed or pro Zoom account to be an alternate host.\n";
-
+    function createAlert(inputstring,type){
+		
+		if (type == 'invalidemail') {
+	        var span = " Warning: "+inputstring+ " does not appear to be a valid email address.\n";
+		} else {
+        	var span = " Warning: "+inputstring+ " should have a licensed or pro Zoom account to be an alternate host.\n";
+		}
+		
+/*
         if($("#alternative_host_alert").length){
             //$("#alternative_host_alert").text(inputstring);
             $("#alternative_host_alert").append('<span id='+inputstring+'>'+span+'</span>');
 
         }else{
-            $('.tag-container').after(
+*/            $('.tag-container').after(
             '<div id="alternative_host_alert" class="alert alert-warning\" role="alert">'+
             '<span id='+inputstring+'>'
             
             +span+'</span></div>');
-        }
+//        }
+    }
+	
+function validateEmail(email) 
+    {
+	
+		var re = /\S+@\S+\.\S+$/;
+        return re.test(email);
     }
       /**
      * Add emails selected into hidden import for form processing
@@ -79,7 +91,7 @@ define(['jquery','jqueryui'], function($,jqui) {
                 inputstring += tagsarray[i].email+',';
                 res = tagsarray[i].email.split("@");
                 if(res[1]!= "uregina.ca"){
-                    createAlert(tagsarray[i].email);
+                    createAlert(tagsarray[i].email,'notuofr');
                 }
             }
         }
@@ -145,6 +157,7 @@ define(['jquery','jqueryui'], function($,jqui) {
                 for (var i = 0; i < cohostsInput.length; ++i) {
                     //Go through og array to find teacher ids to attach
                     if(cohostsInput[i] !=""){
+						/*
                         name =cohostsInput[i];
 
                         for (var j = 0; j < ogteachers.length; ++j) {
@@ -152,10 +165,11 @@ define(['jquery','jqueryui'], function($,jqui) {
                             if(ogteachers[j].email === cohostsInput[i])
                                 name = ogteachers[j].name
                         };
+*/
                         if(!tagsarray){
                             tagsarray = [];
                         }
-                        tagsarray.push({email: cohostsInput[i], name: name});
+                        tagsarray.push({email: cohostsInput[i], name: cohostsInput[i]});
                     }
                 }
                
@@ -168,12 +182,12 @@ define(['jquery','jqueryui'], function($,jqui) {
                             contains = true;
                     }
                     if(!contains)
-                        tagfill.push(ogteachers[i].name);  
+                        tagfill.push(ogteachers[i].email);  
                 }
             }else if(cohosts.length ==0){
                 //if no cohosts are currently added 
                 for (var i = 0; i < ogteachers.length; ++i) {
-                    tagfill.push(ogteachers[i].name);
+                    tagfill.push(ogteachers[i].email);
                 }     
             }else{ //if cohosts are already in zoom meeting (if editng meeting)
                 tagsarray = cohosts;
@@ -184,7 +198,7 @@ define(['jquery','jqueryui'], function($,jqui) {
                             contains = true;
                     }
                     if(!contains){
-                        tagfill.push(ogteachers[i].name);
+                        tagfill.push(ogteachers[i].email);
                     }
                 }
             }
@@ -224,7 +238,7 @@ define(['jquery','jqueryui'], function($,jqui) {
 
                 for (var i = 0; i < ogteachers.length; ++i) {
                     if(previousEmail == ogteachers[i].email)
-                        previousAssign= ogteachers[i].name;
+                        previousAssign= ogteachers[i].email;
                 };
             }).change(function(e) {
 
@@ -232,7 +246,7 @@ define(['jquery','jqueryui'], function($,jqui) {
 
                 for (var i = 0; i < ogteachers.length; ++i) {
                     if(assignEmail == ogteachers[i].email)
-                        var newHost = ogteachers[i].name;
+                        var newHost = ogteachers[i].email;
                 };
 
                 //remove current assigned instructor from list
@@ -254,7 +268,7 @@ define(['jquery','jqueryui'], function($,jqui) {
                 //remove new assigned instructor from tagarray if in
                 temp=[];
                 for (var i = 0; i < tagsarray.length; ++i) {
-                    if(tagsarray[i].name != newHost)
+                    if(tagsarray[i].email != newHost)
                         temp.push(tagsarray[i]);
                 }
 
@@ -286,12 +300,12 @@ define(['jquery','jqueryui'], function($,jqui) {
                     temp=[];
                     for (var i = 0; i < tagsarray.length; ++i) {
                     
-                        if(tagsarray[i].name !== tagLabel){
+                        if(tagsarray[i].email !== tagLabel){
                             temp.push(tagsarray[i]);
                         }else{
                             //clear email if match and email is 0
                             if(tagsarray[i].email==0){
-                                deleteEmail(tagsarray[i].name);
+                                deleteEmail(tagsarray[i].email);
                             }
                         }
                     }
@@ -312,7 +326,7 @@ define(['jquery','jqueryui'], function($,jqui) {
                     //check if already in array
                     var contains = false;
                     for (var i = 0; i < tagsarray.length; ++i) {
-                        if(tagsarray[i].name == newtag){
+                        if(tagsarray[i].email == newtag){
                             contains =true;
                         }
                     }
@@ -337,24 +351,43 @@ define(['jquery','jqueryui'], function($,jqui) {
                 
                 //on space bar click
                 if (e.keyCode == 32) {
-
-                    newtag = $(e.target).val();
-                    if(!tagsarray){
-                        tagsarray = [];
-                    }
-                    tagsarray.push({email: newtag, name: newtag});
+					//remove alert if added previously
+					$("#alternative_host_alert").remove();
+					//if user entered a comma as a separator, we need to trim it off
+                    newtag = $(e.target).val().replace(',','');
+					//get rid of spaces too
+					newtag = newtag.replace(' ','');
+					
+					//check if it is valid email
+					isvalid = validateEmail(newtag);
+					//if not, let them fix and try again
+					if (isvalid) {
+	                    if(!tagsarray){
+	                        tagsarray = [];
+	                    }
+	                    tagsarray.push({email: newtag, name: newtag});
                     
-                    addTags(tagContainer,tagsarray);
-                    addEmails(tagsarray);
+	                    addTags(tagContainer,tagsarray);
+	                    addEmails(tagsarray);
                   
-                    inputNode.val("");
+	                    inputNode.val("");
+					} else {
+						createAlert(newtag,'invalidemail');
+                        inputNode.focus();
+					}
+					
+					//otherwise we reject
+					
+					
+					
+                    
                 }else if(e.keyCode == 8 || e.keyCode == 46){
                     if($(e.target).val() == "" && tagsarray !=0){
 
                         var tagLabel = tagsarray[tagsarray.length-1];
 
                         //remove last tag in view
-                        tagfill.push(tagLabel.name);
+                        tagfill.push(tagLabel.email);
                         $(inputNode).autocomplete('option', 'source', tagfill);
                     
                         tagsarray.splice(-1,1)
@@ -410,10 +443,10 @@ define(['jquery','jqueryui'], function($,jqui) {
 
                             $(inputNode).autocomplete('option', 'source', tagfill);
 
-
                             if(!tagsarray){
                                 tagsarray = [];
                             }
+
                             tagsarray.push({email: teacheremail, name: value});
                             
                             addTags(tagContainer,tagsarray);
