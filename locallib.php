@@ -53,6 +53,8 @@ define('ZOOM_USER_TYPE_CORP', 3);
 //Added for Creating New Users
 define('ZOOM_USER_DOMAIN', 'uregina.ca');
 
+define('ZOOM_MEETING_EXPIRED','ZOOM_MEETING_EXPIRED');
+
 /**
  * Entry not found on Zoom.
  */
@@ -117,9 +119,11 @@ function zoom_fatal_error($errorcode, $module='', $continuelink='', $a=null) {
     $output .= $OUTPUT->header();
 
     // Output message without messing with HTML content of error.
-    $message = '<p class="errormessage">' . get_string($errorcode, $module, $a) . '</p>';
-
-    $output .= $OUTPUT->box($message, 'errorbox alert alert-danger', null, array('data-rel' => 'fatalerror'));
+    $message = ($errorcode=='zoomerr_usernotfound') ? get_string($errorcode, $module, $a) : '<p class="errormessage">' . get_string($errorcode, $module, $a) . '</p>';
+	
+	$warnstate = ($errorcode=='zoomerr_usernotfound') ? 'warning' : 'danger';
+	
+    $output .= $OUTPUT->box($message, 'errorbox alert alert-'.$warnstate, null, array('data-rel' => 'fatalerror'));
 
     if ($CFG->debugdeveloper) {
         if (!empty($debuginfo)) {
@@ -293,9 +297,12 @@ function zoom_get_user_zoomemail($user,$service) {
         $zoomuser = $service->get_user(strtolower($alias));
 
         if ($zoomuser === false) {
+			//check the actual email field, just in case it works
+			$zoomuser = $service->get_user(strtolower($user->email));
 			
-           return false;
-
+			if ($zoomuser === false) {
+				return false;
+			}
         }
 
     }
