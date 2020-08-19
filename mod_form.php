@@ -252,8 +252,9 @@ class mod_zoom_mod_form extends moodleform_mod {
         $mform->addElement('html', '<div class="col-md-9" >');
         $mform->addElement('html', '<div id="demo" class="  yui3-skin-sam tag-container border" >');
            
-        $placeholder=array('placeholder' => 'Enter email');
-        $mform->addElement('text', 'ac-input', '',$placeholder);
+        $atts = array('placeholder' => 'Enter email addresses for any alternative hosts', 'class' => 'text-input');
+		
+        $mform->addElement('text', 'ac-input', '',$atts);
            
         $mform->addElement('html', '</div>');
         $mform->addElement('html', '</div>');
