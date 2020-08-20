@@ -352,7 +352,7 @@ function xmldb_zoom_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2020042700, 'zoom');
     }
 
-    if ($oldversion < 2020051800) {
+    if ($oldversion < 2020080100) {
         // Define field option_mute_upon_entry to be added to zoom.
         $table = new xmldb_table('zoom');
         $field = new xmldb_field('option_mute_upon_entry', XMLDB_TYPE_INTEGER, '1', null, null, null, '1', 'option_audio');
@@ -395,10 +395,10 @@ function xmldb_zoom_upgrade($oldversion) {
         $dbman->change_field_default($table, $field);
 
         // Zoom savepoint reached.
-        upgrade_mod_savepoint(true, 2020051800, 'zoom');
+        upgrade_mod_savepoint(true, 2020080100, 'zoom');
     }
 
-    if ($oldversion < 2020052100) {
+    if ($oldversion < 2020080102) {
         // Increase meeting_id since Zoom increased the size from 10 to 11.
 
         // First need to drop index.
@@ -428,7 +428,7 @@ function xmldb_zoom_upgrade($oldversion) {
         $dbman->add_key($table, $key);
 
         // Zoom savepoint reached.
-        upgrade_mod_savepoint(true, 2020052100, 'zoom');
+        upgrade_mod_savepoint(true, 2020080102, 'zoom');
     }
 
     return true;
