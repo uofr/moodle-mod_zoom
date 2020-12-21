@@ -26,36 +26,36 @@ defined('MOODLE_INTERNAL') || die;
 
 $addons = array(
   "mod_zoom" => array(
-		"handlers" => array(
-			'zoommeetingdetails' => array(
-				'displaydata' => array(
-				'title' => 'pluginname',
-					'icon' => $CFG->wwwroot . '/mod/zoom/pix/icon.gif',
-					'class' => '',
-				),
-				
-				'delegate' => 'CoreCourseModuleDelegate',
-				'method' => 'mobile_course_view', // main function in \mod_zoom\output\mobile
-				'offlinefunctions' => array(
-					'mobile_course_view' => array(),
-				),
-			)
-		),
-		'lang' => array(
-			array('pluginname', 'zoom'),
-			array('join_meeting', 'zoom'),
-			array('unavailable', 'zoom'),
-			array('meeting_time', 'zoom'),
-			array('duration', 'zoom'),
-			array('passwordprotected', 'zoom'),
-			array('password', 'zoom'),
-			array('join_link', 'zoom'),
-			array('joinbeforehost', 'zoom'),
-			array('starthostjoins', 'zoom'),
-			array('startpartjoins', 'zoom'),
-			array('option_audio', 'zoom'),
-			array('status', 'zoom'),
-			array('recurringmeetinglong', 'zoom')
-		)
-	)
+        "handlers" => array(
+            'zoommeetingdetails' => array(
+                'displaydata' => array(
+                'title' => 'pluginname',
+                    'icon' => $CFG->wwwroot . '/mod/zoom/pix/icon.gif',
+                    'class' => '',
+                ),
+
+                'delegate' => 'CoreCourseModuleDelegate',
+                'method' => 'mobile_course_view', // Main function in \mod_zoom\output\mobile.
+                'offlinefunctions' => array(
+                    'mobile_course_view' => array(),
+                ),
+            )
+        ),
+        'lang' => array(
+            array('pluginname', 'zoom'),
+            array('join_meeting', 'zoom'),
+            array('unavailable', 'zoom'),
+            array('meeting_time', 'zoom'),
+            array('duration', 'zoom'),
+            array('passwordprotected', 'zoom'),
+            array('password', 'zoom'),
+            array('join_link', 'zoom'),
+            array('joinbeforehost', 'zoom'),
+            array('starthostjoins', 'zoom'),
+            array('startpartjoins', 'zoom'),
+            array('option_audio', 'zoom'),
+            array('status', 'zoom'),
+            array('recurringmeetinglong', 'zoom')
+        )
+    )
 );

@@ -1,16 +1,19 @@
 # Intro
 
-Zoom is the web and app based video conferencing service (http://zoom.us). This plugin offers tight integration with Moodle, supporting meeting creation, synchronization, grading, and backup/restore.
+Zoom is the web and app based video conferencing service (http://zoom.us). This
+plugin offers tight integration with Moodle, supporting meeting creation,
+synchronization, grading, and backup/restore.
 
 # Prerequisites
 
 This plugin is designed for Educational or Business Zoom accounts.
 
-To connec to the Zoom APIs this plugin requires an account level JWT app to be
+To connect to the Zoom APIs this plugin requires an account level JWT app to be
 created. To create an account-level JWT app the Developer Role Permission is
 required.
 
-See https://marketplace.zoom.us/docs/guides/build/jwt-app. You will need to create a JWT app and that will generate the API key and secret.
+See https://marketplace.zoom.us/docs/guides/build/jwt-app. You will need to
+create a JWT app and that will generate the API key and secret.
 
 ## Installation
 
@@ -24,7 +27,44 @@ See https://marketplace.zoom.us/docs/guides/build/jwt-app. You will need to crea
 
 Please note that the API key and secret is not the same as the LTI key/secret.
 
+If you get "Access token is expired" errors, make sure the date/time on your
+server is properly synchronized with the time servers.
+
 ## Changelog
+
+v3.4
+
+- Used Dashboard API to improve get_meeting_reports task
+- Added meeting invite text to calendar and meeting page to provide phone details
+- Zoom meetings now appear in Timeline block (Thanks nstefanski)
+- Added basic Analytic indicators (Thanks danmarsden)
+- Fixed calendar icon not showing up for non-Boost themes (Thanks danowar2k)
+- Added support for Moodle 3.10
+- Allow privileged users without Zoom to edit meetings (Thanks jrchamp)
+- Fixed bugs related to scheduler support (Thanks jrchamp)
+- Fixed participant count for meeting sessions so it only counts unique users
+- Zoom descriptions keep HTML formatting (Thanks mhughes2k)
+- Fixed failing DB schema checks (Thanks dvdcastro)
+- Requiring passcodes is now a site wide configuration
+
+v3.3
+
+- Fixed problems with error handling (Thanks kbowlerarden and jrchamp)
+- Added language translations for uk, pl, and ru (Thanks mkikets99)
+- Thanks to kubilayagi for all his work on the Zoom plugin these past 2.5 years and good luck on future endevors
+
+v3.2
+
+- Password/Passcode changes
+  - Renamed passwords to passcodes
+  - Added passcodes to Webinars (Thanks jrchamp)
+  - Passcodes are now required
+- Implement completion viewed when user joins meeting (Thanks nstefanski)
+- License recycling improvement (Thanks mrvinceo)
+- Added scheduler support (Thanks mhughes2k)
+- Added support for Zoom API changes related to next_page_token and rate limiting
+- Fixed error handling for non-English Zoom deployments
+- Added Travis CI support
 
 v3.1
 

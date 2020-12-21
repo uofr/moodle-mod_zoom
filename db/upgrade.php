@@ -373,7 +373,8 @@ function xmldb_zoom_upgrade($oldversion) {
 
         // Define field authenticated_users to be added to zoom.
         $table = new xmldb_table('zoom');
-        $field = new xmldb_field('option_authenticated_users', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'option_waiting_room');
+        $field = new xmldb_field('option_authenticated_users', XMLDB_TYPE_INTEGER,
+                '1', null, null, null, '0', 'option_waiting_room');
 
         // Conditionally launch add field authenticated_users.
         if (!$dbman->field_exists($table, $field)) {
@@ -429,6 +430,12 @@ function xmldb_zoom_upgrade($oldversion) {
 
         // Zoom savepoint reached.
         upgrade_mod_savepoint(true, 2020080102, 'zoom');
+    }
+
+    if ($oldversion < 2020120800) {
+        // Delete config no longer used.
+        set_config('calls_left', null, 'mod_zoom');
+        upgrade_mod_savepoint(true, 2020120800, 'zoom');
     }
 
     return true;
