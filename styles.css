@@ -8,6 +8,10 @@
     color: white;
 }
 
+#mod-zoom-old-meetings-header {
+    float: left;
+}
+
 .zoom-meeting-status {
 	text-align: center;
 }
