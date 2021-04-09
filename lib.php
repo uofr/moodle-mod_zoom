@@ -69,6 +69,13 @@ function zoom_add_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
     require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
     $service = new mod_zoom_webservice();
 
+    if (defined('PHPUNIT_TEST') && PHPUNIT_TEST) {
+        $zoom->id = $DB->insert_record('zoom', $zoom);
+        zoom_grade_item_update($zoom);
+        zoom_calendar_item_update($zoom);
+        return $zoom->id;
+    }
+
     // Deals with password manager issues.
     $zoom->password = $zoom->meetingcode;
     unset($zoom->meetingcode);
@@ -299,6 +306,9 @@ function populate_zoom_from_response(stdClass $zoom, stdClass $response) {
     if (isset($response->password)) {
         $newzoom->password = $response->password;
     }
+    if (isset($response->settings->encryption_type)) {
+        $newzoom->option_encryption_type = $response->settings->encryption_type;
+    }
     if (isset($response->settings->join_before_host)) {
         $newzoom->option_jbh = $response->settings->join_before_host;
     }
@@ -357,8 +367,6 @@ function zoom_delete_instance($id) {
         }
     }
 
-    $DB->delete_records('zoom', array('id' => $zoom->id));
-
     // If we delete a meeting instance, do we want to delete the participants?
     $meetinginstances = $DB->get_records('zoom_meeting_details', array('meeting_id' => $zoom->meeting_id));
     foreach ($meetinginstances as $meetinginstance) {
@@ -369,6 +377,8 @@ function zoom_delete_instance($id) {
     // Delete any dependent records here.
     zoom_calendar_item_delete($zoom);
     zoom_grade_item_delete($zoom);
+
+    $DB->delete_records('zoom', array('id' => $zoom->id));
 
     return true;
 }
@@ -486,7 +496,7 @@ function zoom_calendar_item_update(stdClass $zoom) {
 }
 
 /**
- * Delete Moodle calendar event of the Zoom instance.
+ * Delete Moodle calendar events of the Zoom instance.
  *
  * @param stdClass $zoom
  */
@@ -494,12 +504,12 @@ function zoom_calendar_item_delete(stdClass $zoom) {
     global $CFG, $DB;
     require_once($CFG->dirroot.'/calendar/lib.php');
 
-    $eventid = $DB->get_field('event', 'id', array(
+    $events = $DB->get_records('event', array(
         'modulename' => 'zoom',
         'instance' => $zoom->id
     ));
-    if (!empty($eventid)) {
-        calendar_event::load($eventid)->delete();
+    foreach ($events as $event) {
+        calendar_event::load($event)->delete();
     }
 }
 
@@ -581,7 +591,13 @@ function zoom_grade_item_update(stdClass $zoom, $grades=null) {
         $item['gradetype'] = GRADE_TYPE_SCALE;
         $item['scaleid']   = -$zoom->grade;
     } else {
-        $item['gradetype'] = GRADE_TYPE_NONE;
+        $gradebook = grade_get_grades($zoom->course, 'mod', 'zoom', $zoom->id);
+        // Prevent the gradetype from switching to None if grades exist.
+        if (empty($gradebook->items[0]->grades)) {
+            $item['gradetype'] = GRADE_TYPE_NONE;
+        } else {
+            return;
+        }
     }
 
     if ($grades === 'reset') {

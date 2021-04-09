@@ -119,7 +119,7 @@ class mod_zoom_webservice {
      * @throws moodle_exception Moodle exception is thrown for missing config settings.
      */
     public function __construct() {
-        $config = get_config('mod_zoom');
+        $config = get_config('zoom');
         if (!empty($config->apikey)) {
             $this->apikey = $config->apikey;
         } else {
@@ -178,7 +178,7 @@ class mod_zoom_webservice {
         global $CFG;
         $url = self::API_URL . $path;
         $method = strtolower($method);
-        $proxyhost = get_config('mod_zoom', 'proxyhost');
+        $proxyhost = get_config('zoom', 'proxyhost');
         $cfg = new stdClass();
         if (!empty($proxyhost)) {
             $cfg->proxyhost = $CFG->proxyhost;
@@ -252,7 +252,7 @@ class mod_zoom_webservice {
                         $timediff = $retryafter - time();
                         // If we have no API calls remaining, save retry-after.
                         if ($header['x-ratelimit-remaining'] == 0 && !empty($retryafter)) {
-                            set_config('retry-after', $retryafter, 'mod_zoom');
+                            set_config('retry-after', $retryafter, 'zoom');
                             throw new zoom_api_limit_exception($response->message,
                                     $response->code, $retryafter);
                         } else if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
@@ -527,12 +527,15 @@ class mod_zoom_webservice {
             $data['settings']['meeting_authentication'] = (bool) $zoom->option_authenticated_users;
         }
 
-        if ($zoom->webinar) {
+        if (!empty($zoom->webinar)) {
             $data['type'] = $zoom->recurring ? ZOOM_RECURRING_WEBINAR : ZOOM_SCHEDULED_WEBINAR;
         } else {
             $data['type'] = $zoom->recurring ? ZOOM_RECURRING_MEETING : ZOOM_SCHEDULED_MEETING;
             $data['settings']['participant_video'] = (bool) ($zoom->option_participants_video);
             $data['settings']['join_before_host'] = (bool) ($zoom->option_jbh);
+            $data['settings']['encryption_type'] = (isset($zoom->option_encryption_type) &&
+                    $zoom->option_encryption_type === ZOOM_ENCRYPTION_TYPE_E2EE) ?
+                    ZOOM_ENCRYPTION_TYPE_E2EE : ZOOM_ENCRYPTION_TYPE_ENHANCED;
             $data['settings']['waiting_room'] = (bool) ($zoom->option_waiting_room);
             $data['settings']['mute_upon_entry'] = (bool) ($zoom->option_mute_upon_entry);
         }
@@ -575,7 +578,7 @@ class mod_zoom_webservice {
     public function create_meeting($zoom) {
         // Provide license if needed.
         $this->provide_license($zoom->host_id);
-        $url = "users/$zoom->host_id/" . ($zoom->webinar ? 'webinars' : 'meetings');
+        $url = "users/$zoom->host_id/" . (!empty($zoom->webinar) ? 'webinars' : 'meetings');
         return $this->_make_call($url, $this->_database_to_api($zoom), 'post');
     }
 
@@ -676,12 +679,16 @@ class mod_zoom_webservice {
     /**
      * Get the meeting invite note that was sent for a specific meeting from Zoom.
      *
-     * @param int $id The meeting_id of the meeting to retrieve.
-     * @return stdClass The meeting's invite note.
+     * @param stdClass $zoom The zoom meeting
+     * @return string The meeting's invite note.
      * @link https://marketplace.zoom.us/docs/api-reference/zoom-api/meetings/meetinginvitation
      */
-    public function get_meeting_invitation($id) {
-        $url = 'meetings/' . $id . '/invitation';
+    public function get_meeting_invitation($zoom) {
+        // Webinar does not have meeting invite info.
+        if ($zoom->webinar) {
+            return null;
+        }
+        $url = 'meetings/' . $zoom->meeting_id . '/invitation';
         $response = null;
         try {
             $response = $this->_make_call($url);
