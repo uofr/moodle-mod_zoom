@@ -632,37 +632,6 @@ function zoom_get_course_instructors($courseid) {
     return $teachersmenu;
 }
 
-//Added for new co-host feature
-/**
- * Get all instructors for a course
- * @param string $detailsid The meeting ID that you want to get the participants report for.
- * @return array The user data as an array of records (array of arrays).
- */
-function zoom_get_alternative_hosts($zoomid,$service) {
-    global $DB;
-  
-    $zoom  = $DB->get_record('zoom', array('id' => $zoomid), '*', MUST_EXIST);
-    $cohosts = explode(",", $zoom->alternative_hosts);
-    $users = [];
-    foreach($cohosts as $cohost){
-
-        if($cohost != ""){
-            $user = zoom_get_user_info(trim($cohost));
-            $usertemp=new stdClass;
-            
-			$usertemp->name = fullname($user);
-            $usertemp->email = $cohost;
-         
-            $users[] = $usertemp;
-        }
-    }
-    if(empty($users))
-        return false;
-    else
-        return $users;
-
-}
-
 /**
 * Get user from db *this forces that all alternative hosts must be in moodle instance
 * @param int $email of user
