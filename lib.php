@@ -95,7 +95,7 @@ function zoom_add_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
         }
     }
     //Added for new alternative hosts function
-    if(isset($zoom->cohostid)){
+    /*if(isset($zoom->cohostid)){
         $teacheremails = array_filter(explode(",", $zoom->cohostid));
         $inputstring = zoom_update_alternative_host($teacheremails);
         $zoom->alternative_hosts = $inputstring;
@@ -111,7 +111,7 @@ function zoom_add_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
             $zoom->alternative_hosts = $alternative_hosts.",".$inputstring;
         }
         unset($zoom->newcohost);
-    }
+    }*/
     //End of Added
 
 
@@ -184,7 +184,7 @@ function zoom_update_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
         }
     }
     //Added for new alternative host
-    if(isset($zoom->cohostid)){
+    /*if(isset($zoom->cohostid)){
         $teacheremails = array_filter(explode(",", $zoom->cohostid));
         $inputstring = zoom_update_alternative_host($teacheremails);
         $zoom->alternative_hosts = $inputstring;
@@ -200,8 +200,8 @@ function zoom_update_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
             $zoom->alternative_hosts = $zoom->alternative_hosts.",".$inputstring;
         }
         
-        unset($zoom->newcohost);
-    }
+        unset($zoom->newcohost);*/
+   // }
     //End of Added
     
     //if the assigned host has been changed, we need to change the host id

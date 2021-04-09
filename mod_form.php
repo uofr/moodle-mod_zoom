@@ -131,22 +131,8 @@ class mod_zoom_mod_form extends moodleform_mod {
             }
         }
         
-        //Added for fancier alternative host select
-        // Choose the teacher (if allowed)
-        $teacherarray = zoom_get_course_instructors($this->_course->id);
-        //get list of co-hosts already added, if none false is returned
-        $cohosts=false;
-        if(!$isnew) {
-            $cohosts = zoom_get_alternative_hosts($this->current->id,$service);
-        }
-        
-        $teachernames=[];
-        foreach($teacherarray as $teacher){
-            $teachernames[]=$teacher->name;
-        }
-        
-        $PAGE->requires->js_call_amd('mod_zoom/cohost', 'init',[$teacherarray,$cohosts]);
-        //end of added
+
+    
 
 
         // If the current editing user has the host saved in the db for this meeting on their list
@@ -175,7 +161,9 @@ class mod_zoom_mod_form extends moodleform_mod {
         //Add an assign instructor field if user has the capbility to do so
         $context = get_context_instance(CONTEXT_COURSE,$this->_course->id);
         if (has_capability('mod/zoom:assign', $context)) {
-    
+
+            $teacherarray = zoom_get_course_instructors($this->_course->id);
+
             $teachersmenu = array($USER->email => fullname($USER));
             foreach ($teacherarray as $teacher) {
                 $teachersmenu[$teacher->email] = $teacher->name;
@@ -445,34 +433,34 @@ class mod_zoom_mod_form extends moodleform_mod {
 
         // Add alternative hosts.
         //$mform->addElement('text', 'alternative_hosts', get_string('alternative_hosts', 'zoom'), array('size' => '64'));
-        //$mform->setType('alternative_hosts', PARAM_TEXT);
+       // $mform->setType('alternative_hosts', PARAM_TEXT);
         // Set the maximum field length to 255 because that's the limit on Zoom's end.
         //$mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
-       // $mform->addHelpButton('alternative_hosts', 'alternative_hosts', 'zoom');
+        //$mform->addHelpButton('alternative_hosts', 'alternative_hosts', 'zoom');
 
         //surrounded by a hidden div to open when zoom meeting is clicked.
-        $mform->addElement('html', '<div id="id_addcohost"  class="form-group row  fitem" >');
+       // $mform->addElement('html', '<div id="id_addcohost"  class="form-group row  fitem" >');
 
-        $mform->addElement('html', '<div class="col-md-3" >');
-        $mform->addElement('html', '<label>'.get_string('alternative_hosts', 'zoom').'</label> ');
+        //$mform->addElement('html', '<div class="col-md-3" >');
+        //$mform->addElement('html', '<label>'.get_string('alternative_hosts', 'zoom').'</label> ');
         //Add co-host select option - odd placement but helps to format a better spot for help icon
         //$mform->addElement('text', 'newcohost', '','hidden');
-        $mform->addElement('text', 'cohostid', '','hidden');
+        //$mform->addElement('text', 'cohostid', '','hidden');
 
-        $mform->addElement('html', '</div>');
+        //$mform->addElement('html', '</div>');
            
-        $mform->addElement('html', '<div class="col-md-9" >');
-        $mform->addElement('html', '<div id="demo" class="  yui3-skin-sam tag-container border" >');
+        //$mform->addElement('html', '<div class="col-md-9" >');
+        //$mform->addElement('html', '<div id="demo" class="  yui3-skin-sam tag-container border" >');
            
-        $atts = array('placeholder' => 'Enter email addresses for any alternative hosts', 'class' => 'text-input');
+        //$atts = array('placeholder' => 'Enter email addresses for any alternative hosts', 'class' => 'text-input');
 		
-        $mform->addElement('text', 'ac-input', '',$atts);
+        //$mform->addElement('text', 'ac-input', '',$atts);
            
-        $mform->addElement('html', '</div>');
-        $mform->addElement('html', '</div>');
-        $mform->addElement('html', '</div>');
+        //$mform->addElement('html', '</div>');
+        //$mform->addElement('html', '</div>');
+        //$mform->addElement('html', '</div>');
 
-        $mform->addHelpButton('cohost', 'alternative_hosts', 'zoom');
+        //$mform->addHelpButton('cohost', 'alternative_hosts', 'zoom');
         //End of added
 
 
@@ -652,13 +640,13 @@ class mod_zoom_mod_form extends moodleform_mod {
             // If the admin did show the plain input field.
             if ($config->showalternativehosts == ZOOM_ALTERNATIVEHOSTS_INPUTFIELD) {
                 // Check if the listed alternative hosts are valid users on Zoom.
-                /* $alternativehosts = explode(',', str_replace(';', ',', $data['alternative_hosts']));
+                 $alternativehosts = explode(',', str_replace(';', ',', $data['alternative_hosts']));
                 foreach ($alternativehosts as $alternativehost) {
                     if (!($service->get_user($alternativehost))) {
                         $errors['alternative_hosts'] = get_string('zoomerr_alternativehostusernotfound', 'zoom', $alternativehost);
                         break;
                     }
-                }*/
+                }
 
                 // If the admin did show the user picker.
             } else if ($config->showalternativehosts == ZOOM_ALTERNATIVEHOSTS_PICKER) {
@@ -683,7 +671,7 @@ class mod_zoom_mod_form extends moodleform_mod {
                 // Because of this, we skip adding this string to the language pack.
                 $errors['option_encryption_type_group'] = 'The submitted encryption type is not valid.';
             }
-        }*/
+        }
 
         //check capability
         if (isset($data['assign'])) {

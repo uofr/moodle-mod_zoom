@@ -46,6 +46,7 @@ $string['apisecret'] = 'Zoom API secret';
 $string['apisecret_desc'] = '';
 $string['apiurl'] = 'Zoom API url';
 $string['apiurl_desc'] = '';
+$string['assign'] = 'Assign Instructor';
 $string['audio_both'] = 'Computer audio and Telephone';
 $string['audio_telephony'] = 'Telephone only';
 $string['audio_voip'] = 'Computer audio only';
