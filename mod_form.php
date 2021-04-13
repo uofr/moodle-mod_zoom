@@ -159,7 +159,7 @@ class mod_zoom_mod_form extends moodleform_mod {
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
         //Add an assign instructor field if user has the capbility to do so
-        $context = get_context_instance(CONTEXT_COURSE,$this->_course->id);
+        $context = context_course::instance($this->_course->id);
         if (has_capability('mod/zoom:assign', $context)) {
 
             $teacherarray = zoom_get_course_instructors($this->_course->id);

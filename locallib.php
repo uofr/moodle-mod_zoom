@@ -616,7 +616,7 @@ function zoom_get_course_instructors($courseid) {
     global $DB;
 
     $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
-    $context = get_context_instance(CONTEXT_COURSE, $courseid);
+    $context = context_course::instance($courseid);
     $teachers = get_role_users($role->id, $context);
 
     $teachersmenu = array();
