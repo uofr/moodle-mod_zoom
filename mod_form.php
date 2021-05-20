@@ -51,7 +51,7 @@ class mod_zoom_mod_form extends moodleform_mod {
         $isnew = empty($this->_cm);
 
         $service = new mod_zoom_webservice();
-        $zoomuser = zoom_get_user_zoomemail($USER,$service);
+        $zoomuser = $service->get_user($USER->email);
 
         // If creating a new instance, but the Zoom user does not exist.
         if ($isnew && $zoomuser === false) {
@@ -130,10 +130,6 @@ class mod_zoom_mod_form extends moodleform_mod {
                 }
             }
         }
-        
-
-    
-
 
         // If the current editing user has the host saved in the db for this meeting on their list
         // of people that they can schedule for, allow them to change the host, otherwise don't.
@@ -520,7 +516,7 @@ class mod_zoom_mod_form extends moodleform_mod {
      *
      * Only available on moodleform_mod.
      *
-     * @param array $default_values passed by reference
+     * @param array $defaultvalues passed by reference
      */
     public function data_preprocessing(&$defaultvalues) {
         parent::data_preprocessing($defaultvalues);

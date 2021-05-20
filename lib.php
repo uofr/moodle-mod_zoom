@@ -86,7 +86,9 @@ function zoom_add_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
 
     $zoom->course = (int) $zoom->course;
     
-    //Added for assign
+    $service = new mod_zoom_webservice();
+    
+    //Added for assign 
     if(isset($zoom->assign)){
         $newhost = $service->get_user($zoom->assign);
         //check if hostid matches selected host
@@ -151,8 +153,7 @@ function zoom_update_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
     $updatedzoomrecord = $DB->get_record('zoom', array('id' => $zoom->id));
     $zoom->meeting_id = $updatedzoomrecord->meeting_id;
     $zoom->webinar = $updatedzoomrecord->webinar;
-    
-    
+    $service = new mod_zoom_webservice();
     
     $changehost = FALSE;
     //Added for assign
@@ -229,6 +230,7 @@ function zoom_update_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
         
         return true;
     }
+   
 }
 
 /**
