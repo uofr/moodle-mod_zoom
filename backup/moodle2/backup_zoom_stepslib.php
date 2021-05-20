@@ -40,15 +40,12 @@ class backup_zoom_activity_structure_step extends backup_activity_structure_step
      * @return backup_nested_element
      */
     protected function define_structure() {
-        // Are we including userinfo?
-        $userinfo = $this->get_setting_value('userinfo');
-
         // Define the root element describing the zoom instance.
         $zoom = new backup_nested_element('zoom', array('id'), array(
             'intro', 'introformat', 'grade',
             'uuid', 'meeting_id', 'start_url', 'join_url',
             'created_at', 'host_id', 'name', 'start_time', 'timemodified',
-            'recurring', 'webinar', 'duration', 'timezone', 'password', 'option_jbh',
+            'recurring', 'webinar', 'duration', 'timezone', 'password', 'option_encryption_type', 'option_jbh',
             'option_start_type', 'option_host_video', 'option_participants_video',
             'option_audio', 'status'));
 

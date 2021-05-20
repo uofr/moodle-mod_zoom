@@ -78,7 +78,6 @@ class mod_zoom_external extends external_api {
         // Request and permission validation.
         $cm = $DB->get_record('course_modules', array('id' => $params['zoomid']), '*', MUST_EXIST);
         $zoom  = $DB->get_record('zoom', array('id' => $cm->instance), '*', MUST_EXIST);
-        $course  = $DB->get_record('course', array('id' => $cm->course), '*', MUST_EXIST);
 
         $context = context_module::instance($cm->id);
         self::validate_context($context);
@@ -210,6 +209,10 @@ class mod_zoom_external extends external_api {
             // Call the zoom/lib API.
             zoom_grade_item_update($zoom, $grades);
         }
+
+        // Track completion viewed.
+        $completion = new completion_info($course);
+        $completion->set_module_viewed($cm);
 
         // Pass url to join zoom meeting in order to redirect user.
         $joinurl = new moodle_url($zoom->join_url, array('uname' => fullname($USER)));

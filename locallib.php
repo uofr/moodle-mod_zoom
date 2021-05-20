@@ -49,6 +49,36 @@ define('ZOOM_MAX_RECORDS_PER_CALL', 300);
 define('ZOOM_USER_TYPE_BASIC', 1);
 define('ZOOM_USER_TYPE_PRO', 2);
 define('ZOOM_USER_TYPE_CORP', 3);
+define('ZOOM_MEETING_NOT_FOUND_ERROR_CODE', 3001);
+define('ZOOM_USER_NOT_FOUND_ERROR_CODE', 1001);
+define('ZOOM_INVALID_USER_ERROR_CODE', 1120);
+// Webinar options.
+define('ZOOM_WEBINAR_DISABLE', 0);
+define('ZOOM_WEBINAR_SHOWONLYIFLICENSE', 1);
+define('ZOOM_WEBINAR_ALWAYSSHOW', 2);
+// Encryption type options.
+define('ZOOM_ENCRYPTION_DISABLE', 0);
+define('ZOOM_ENCRYPTION_SHOWONLYIFPOSSIBLE', 1);
+define('ZOOM_ENCRYPTION_ALWAYSSHOW', 2);
+// Encryption types. String values for Zoom API.
+define('ZOOM_ENCRYPTION_TYPE_ENHANCED', 'enhanced_encryption');
+define('ZOOM_ENCRYPTION_TYPE_E2EE', 'e2ee');
+// Alternative hosts options.
+define('ZOOM_ALTERNATIVEHOSTS_DISABLE', 0);
+define('ZOOM_ALTERNATIVEHOSTS_INPUTFIELD', 1);
+define('ZOOM_ALTERNATIVEHOSTS_PICKER', 2);
+// Scheduling privilege options.
+define('ZOOM_SCHEDULINGPRIVILEGE_DISABLE', 0);
+define('ZOOM_SCHEDULINGPRIVILEGE_ENABLE', 1);
+// All meetings options.
+define('ZOOM_ALLMEETINGS_DISABLE', 0);
+define('ZOOM_ALLMEETINGS_ENABLE', 1);
+// Download iCal options.
+define('ZOOM_DOWNLOADICAL_DISABLE', 0);
+define('ZOOM_DOWNLOADICAL_ENABLE', 1);
+// Capacity warning options.
+define('ZOOM_CAPACITYWARNING_DISABLE', 0);
+define('ZOOM_CAPACITYWARNING_ENABLE', 1);
 
 //Added for Creating New Users
 define('ZOOM_USER_DOMAIN', 'uregina.ca');
@@ -57,37 +87,117 @@ define('ZOOM_MEETING_EXPIRED','ZOOM_MEETING_EXPIRED');
 
 /**
  * Entry not found on Zoom.
+ *
+ * @copyright  2020 UC Regents
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class zoom_not_found_exception extends moodle_exception {
-    // Web service response.
-    public $response = null;
     /**
-     * @param string $response  Web service response
+     * Web service response.
+     * @var string
      */
-    public function __construct($response) {
+    public $response = null;
+
+    /**
+     * Constructor
+     * @param string $response      Web service response message
+     * @param int $errorcode     Web service response error code
+     */
+    public function __construct($response, $errorcode) {
         $this->response = $response;
-        parent::__construct('errorwebservice_notfound', 'mod_zoom', '', $response);
+        $this->zoomerrorcode = $errorcode;
+        parent::__construct('errorwebservice_notfound', 'zoom');
+    }
+}
+
+/**
+ * Bad request received by Zoom.
+ *
+ * @copyright  2020 UC Regents
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class zoom_bad_request_exception extends moodle_exception {
+    /**
+     * Web service response.
+     * @var string
+     */
+    public $response = null;
+
+    /**
+     * Constructor
+     * @param string $response      Web service response message
+     * @param int $errorcode     Web service response error code
+     */
+    public function __construct($response, $errorcode) {
+        $this->response = $response;
+        $this->zoomerrorcode = $errorcode;
+        parent::__construct('errorwebservice_badrequest', 'zoom', '', $response);
     }
 }
 
 /**
  * Couldn't succeed within the allowed number of retries.
+ *
+ * @copyright  2020 UC Regents
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class zoom_api_retry_failed_exception extends moodle_exception {
-    // Web service response.
-    public $response = null;
     /**
-     * @param string $response  Web service response
+     * Web service response.
+     * @var string
      */
-    public function __construct($response) {
+    public $response = null;
+
+    /**
+     * Constructor
+     * @param string $response      Web service response
+     * @param int $errorcode     Web service response error code
+     */
+    public function __construct($response, $errorcode) {
         $this->response = $response;
+        $this->zoomerrorcode = $errorcode;
         $a = new stdClass();
         $a->response = $response;
         $a->maxretries = mod_zoom_webservice::MAX_RETRIES;
-        parent::__construct('zoomerr_maxretries', 'mod_zoom', '', $a);
+        parent::__construct('zoomerr_maxretries', 'zoom', '', $a);
     }
 }
 
+/**
+ * Exceeded daily API limit.
+ *
+ * @copyright  2020 UC Regents
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class zoom_api_limit_exception extends moodle_exception {
+    /**
+     * Web service response.
+     * @var string
+     */
+    public $response = null;
+
+    /**
+     * Unix timestamp of next time to API can be called.
+     * @var int
+     */
+    public $retryafter = null;
+
+    /**
+     * Constructor
+     * @param string $response  Web service response
+     * @param int $errorcode    Web service response error code
+     * @param int $retryafter   Unix timestamp of next time to API can be called.
+     */
+    public function __construct($response, $errorcode, $retryafter) {
+        $this->response = $response;
+        $this->zoomerrorcode = $errorcode;
+        $this->retryafter = $retryafter;
+        $a = new stdClass();
+        $a->response = $response;
+        parent::__construct('zoomerr_apilimit', 'zoom', '',
+                userdate($retryafter, get_string('strftimedaydatetime', 'core_langconfig')));
+    }
+}
 
 /**
  * Terminate the current script with a fatal error.
@@ -99,8 +209,9 @@ class zoom_api_retry_failed_exception extends moodle_exception {
  *
  * @param string $errorcode The name of the string from error.php to print
  * @param string $module name of module
- * @param string $link The url where the user will be prompted to continue. If no url is provided the user will be directed to the
- *                     site index page.
+ * @param string $continuelink The url where the user will be prompted to continue.
+ *                             If no url is provided the user will be directed to
+ *                             the site index page.
  * @param mixed $a Extra words and phrases that might be required in the error string
  */
 function zoom_fatal_error($errorcode, $module='', $continuelink='', $a=null) {
@@ -161,8 +272,8 @@ function zoom_fatal_error($errorcode, $module='', $continuelink='', $a=null) {
 function zoom_get_instance_setup() {
     global $DB;
 
-    $id = optional_param('id', 0, PARAM_INT); // Course_module ID, or
-    $n  = optional_param('n', 0, PARAM_INT);  // ... zoom instance ID - it should be named as the first character of the module.
+    $id = optional_param('id', 0, PARAM_INT); // Course_module ID.
+    $n  = optional_param('n', 0, PARAM_INT);  // Zoom instance ID.
 
     if ($id) {
         $cm         = get_coursemodule_from_id('zoom', $id, 0, false, MUST_EXIST);
@@ -188,14 +299,12 @@ function zoom_get_instance_setup() {
  * Retrieves information for a meeting.
  *
  * @param int $meetingid
- * @param bool $webinar
- * @param string $hostid the host's uuid
  * @return array information about the meeting
  */
-function zoom_get_sessions_for_display($meetingid, $webinar, $hostid) {
+function zoom_get_sessions_for_display($meetingid) {
     require_once(__DIR__.'/../../lib/moodlelib.php');
     global $DB;
-    $service = new mod_zoom_webservice();
+
     $sessions = array();
     $format = get_string('strftimedatetimeshort', 'langconfig');
 
@@ -206,7 +315,36 @@ function zoom_get_sessions_for_display($meetingid, $webinar, $hostid) {
         $uuid = $instance->uuid;
         $participantlist = zoom_get_participants_report($instance->id);
         $sessions[$uuid]['participants'] = $participantlist;
-        $sessions[$uuid]['count'] = count($participantlist);
+
+        $uniquevalues = [];
+        $uniqueparticipantcount = 0;
+        foreach ($participantlist as $participant) {
+            $unique = true;
+            if ($participant->uuid != null) {
+                if (array_key_exists($participant->uuid, $uniquevalues)) {
+                    $unique = false;
+                } else {
+                    $uniquevalues[$participant->uuid] = true;
+                }
+            }
+            if ($participant->userid != null) {
+                if (!$unique || !array_key_exists($participant->userid, $uniquevalues)) {
+                    $uniquevalues[$participant->userid] = true;
+                } else {
+                    $unique = false;
+                }
+            }
+            if ($participant->user_email != null) {
+                if (!$unique || !array_key_exists($participant->user_email, $uniquevalues)) {
+                    $uniquevalues[$participant->user_email] = true;
+                } else {
+                    $unique = false;
+                }
+            }
+            $uniqueparticipantcount += $unique ? 1 : 0;
+        }
+
+        $sessions[$uuid]['count'] = $uniqueparticipantcount;
         $sessions[$uuid]['topic'] = $instance->topic;
         $sessions[$uuid]['duration'] = $instance->duration;
         $sessions[$uuid]['starttime'] = userdate($instance->start_time, $format);
@@ -222,7 +360,7 @@ function zoom_get_sessions_for_display($meetingid, $webinar, $hostid) {
  * @return array Array of booleans: [in progress, available, finished].
  */
 function zoom_get_state($zoom) {
-    $config = get_config('mod_zoom');
+    $config = get_config('zoom');
     $now = time();
 
     $firstavailable = $zoom->start_time - ($config->firstabletojoin * 60);
@@ -311,25 +449,44 @@ function zoom_get_user_zoomemail($user,$service) {
 }
 
 /**
+ * Get the Zoom meeting security settings, including meeting password requirements of the user's master account.
+ *
+ * @return stdClass
+ */
+function zoom_get_meeting_security_settings() {
+    $cache = cache::make('mod_zoom', 'zoommeetingsecurity');
+    if (!($zoommeetingsecurity = $cache->get('meetingsecurity'))) {
+        $service = new mod_zoom_webservice();
+        try {
+            $zoommeetingsecurity = $service->get_account_meeting_security_settings();
+        } catch (moodle_exception $error) {
+            throw $error;
+        }
+        $cache->set('meetingsecurity', $zoommeetingsecurity);
+    }
+
+    return $zoommeetingsecurity;
+}
+
+/**
  * Check if the error indicates that a meeting is gone.
  *
- * @param string $error
+ * @param moodle_exception $error
  * @return bool
  */
 function zoom_is_meeting_gone_error($error) {
     // If the meeting's owner/user cannot be found, we consider the meeting to be gone.
-    return strpos($error, 'not found') !== false || zoom_is_user_not_found_error($error);
+    return ($error->zoomerrorcode === ZOOM_MEETING_NOT_FOUND_ERROR_CODE) || zoom_is_user_not_found_error($error);
 }
 
 /**
  * Check if the error indicates that a user is not found or does not belong to the current account.
  *
- * @param string $error
+ * @param moodle_exception $error
  * @return bool
  */
 function zoom_is_user_not_found_error($error) {
-    return strpos($error, 'not exist') !== false || strpos($error, 'not belong to this account') !== false
-        || strpos($error, 'not found on this account') !== false;
+    return ($error->zoomerrorcode === ZOOM_USER_NOT_FOUND_ERROR_CODE) || ($error->zoomerrorcode === ZOOM_INVALID_USER_ERROR_CODE);
 }
 
 /**
@@ -358,7 +515,6 @@ function zoom_meetingnotfound_param($cmid) {
  */
 function zoom_get_participants_report($detailsid) {
     global $DB;
-    $service = new mod_zoom_webservice();
     $sql = 'SELECT zmp.id,
                    zmp.name,
                    zmp.userid,
@@ -404,36 +560,6 @@ function zoom_get_course_instructors($courseid) {
 }
 
 //Added for new co-host feature
-/**
- * Get all instructors for a course
- * @param string $detailsid The meeting ID that you want to get the participants report for.
- * @return array The user data as an array of records (array of arrays).
- */
-function zoom_get_alternative_hosts($zoomid,$service) {
-    global $DB;
-  
-    $zoom  = $DB->get_record('zoom', array('id' => $zoomid), '*', MUST_EXIST);
-    $cohosts = explode(",", $zoom->alternative_hosts);
-    $users = [];
-    foreach($cohosts as $cohost){
-
-        if($cohost != ""){
-            $user = zoom_get_user_info(trim($cohost));
-            $usertemp=new stdClass;
-            
-			$usertemp->name = fullname($user);
-            $usertemp->email = $cohost;
-         
-            $users[] = $usertemp;
-        }
-    }
-    if(empty($users))
-        return false;
-    else
-        return $users;
-
-}
-
 /**
 * Get user from db *this forces that all alternative hosts must be in moodle instance
 * @param int $email of user
@@ -524,4 +650,298 @@ function zoom_email_alias($user){
     $alias = $user->username.'@'.ZOOM_USER_DOMAIN;
     //test if it is their zoom account
     return $alias;
+}
+
+/**
+ * Creates a default passcode from the user's Zoom meeting security settings.
+ *
+ * @param stdClass $meetingpasswordrequirement
+ * @return string passcode
+ */
+function zoom_create_default_passcode($meetingpasswordrequirement) {
+    $length = max($meetingpasswordrequirement->length, 6);
+    $random = rand(0, pow(10, $length) - 1);
+    $passcode = str_pad(strval($random), $length, '0', STR_PAD_LEFT);
+
+    // Get a random set of indexes to replace with non-numberic values.
+    $indexes = range(0, $length - 1);
+    shuffle($indexes);
+
+    if ($meetingpasswordrequirement->have_letter || $meetingpasswordrequirement->have_upper_and_lower_characters) {
+        // Random letter from A-Z.
+        $passcode[$indexes[0]] = chr(rand(65, 90));
+        // Random letter from a-z.
+        $passcode[$indexes[1]] = chr(rand(97, 122));
+    }
+
+    if ($meetingpasswordrequirement->have_special_character) {
+        $specialchar = '@_*-';
+        $passcode[$indexes[2]] = substr(str_shuffle($specialchar), 0, 1);
+    }
+
+    return $passcode;
+}
+
+/**
+ * Creates a description string from the user's Zoom meeting security settings.
+ *
+ * @param stdClass $meetingpasswordrequirement
+ * @return string description of password requirements
+ */
+function zoom_create_passcode_description($meetingpasswordrequirement) {
+    $description = '';
+    if ($meetingpasswordrequirement->only_allow_numeric) {
+        $description .= get_string('password_only_numeric', 'mod_zoom') . ' ';
+    } else {
+        if ($meetingpasswordrequirement->have_letter && !$meetingpasswordrequirement->have_upper_and_lower_characters) {
+            $description .= get_string('password_letter', 'mod_zoom') . ' ';
+        } else if ($meetingpasswordrequirement->have_upper_and_lower_characters) {
+            $description .= get_string('password_lower_upper', 'mod_zoom') . ' ';
+        }
+
+        if ($meetingpasswordrequirement->have_number) {
+            $description .= get_string('password_number', 'mod_zoom') . ' ';
+        }
+
+        if ($meetingpasswordrequirement->have_special_character) {
+            $description .= get_string('password_special', 'mod_zoom') . ' ';
+        } else {
+            $description .= get_string('password_allowed_char', 'mod_zoom') . ' ';
+        }
+    }
+
+    if ($meetingpasswordrequirement->length) {
+        $description .= get_string('password_length', 'mod_zoom', $meetingpasswordrequirement->length) . ' ';
+    }
+
+    if ($meetingpasswordrequirement->consecutive_characters_length &&
+        $meetingpasswordrequirement->consecutive_characters_length > 0) {
+        $description .= get_string('password_consecutive', 'mod_zoom',
+            $meetingpasswordrequirement->consecutive_characters_length - 1) . ' ';
+    }
+
+    $description .= get_string('password_max_length', 'mod_zoom');
+    return $description;
+}
+
+/**
+ * Creates an array of users who can be selected as alternative host in a given context.
+ *
+ * @param context $context The context to be used.
+ *
+ * @return array Array of users (mail => fullname).
+ */
+function zoom_get_selectable_alternative_hosts_list(context $context) {
+    // Get selectable alternative host users based on the capability.
+    $users = get_enrolled_users($context, 'mod/zoom:eligiblealternativehost', 0, 'u.*', 'lastname');
+
+    // Create array of users.
+    $selectablealternativehosts = array();
+
+    // Create Zoom API instance.
+    $service = new mod_zoom_webservice();
+
+    // Iterate over selectable alternative host users.
+    foreach ($users as $u) {
+        // Note: Basically, if this is the user's own data row, the data row should be skipped.
+        // But this would then not cover the case when a user is scheduling the meeting _for_ another user
+        // and wants to be an alternative host himself.
+        // As this would have to be handled at runtime in the browser, we just offer all users with the
+        // capability as selectable and leave this aspect as possible improvement for the future.
+        // At least, Zoom does not care if the user who is the host adds himself as alternative host as well.
+
+        // Verify that the user really has a Zoom account.
+        $zoomuser = $service->get_user($u->email);
+        if ($zoomuser !== false) {
+            // Add user to array of users.
+            $selectablealternativehosts[$u->email] = fullname($u);
+        }
+    }
+
+    return $selectablealternativehosts;
+}
+
+/**
+ * Creates a string of roles who can be selected as alternative host in a given context.
+ *
+ * @param context $context The context to be used.
+ *
+ * @return string The string of roles.
+ */
+function zoom_get_selectable_alternative_hosts_rolestring(context $context) {
+    // Get selectable alternative host users based on the capability.
+    $roles = get_role_names_with_caps_in_context($context, array('mod/zoom:eligiblealternativehost'));
+
+    // Compose string.
+    $rolestring = implode(', ', $roles);
+
+    return $rolestring;
+}
+
+/**
+ * Get existing Moodle users from a given set of alternative hosts.
+ *
+ * @param array $alternativehosts The array of alternative hosts email addresses.
+ *
+ * @return array The array of existing Moodle user objects.
+ */
+function zoom_get_users_from_alternativehosts(array $alternativehosts) {
+    global $DB;
+
+    // Get the existing Moodle user objects from the DB.
+    list($insql, $inparams) = $DB->get_in_or_equal($alternativehosts);
+    $sql = 'SELECT *
+            FROM {user}
+            WHERE email '.$insql.'
+            ORDER BY lastname ASC';
+    $alternativehostusers = $DB->get_records_sql($sql, $inparams);
+
+    return $alternativehostusers;
+}
+
+/**
+ * Get non-Moodle users from a given set of alternative hosts.
+ *
+ * @param array $alternativehosts The array of alternative hosts email addresses.
+ *
+ * @return array The array of non-Moodle user mail addresses.
+ */
+function zoom_get_nonusers_from_alternativehosts(array $alternativehosts) {
+    global $DB;
+
+    // Get the non-Moodle user mail addresses by checking which one does not exist in the DB.
+    $alternativehostnonusers = array();
+    list($insql, $inparams) = $DB->get_in_or_equal($alternativehosts);
+    $sql = 'SELECT email
+            FROM {user}
+            WHERE email '.$insql.'
+            ORDER BY email ASC';
+    $alternativehostusersmails = $DB->get_records_sql($sql, $inparams);
+    foreach ($alternativehosts as $ah) {
+        if (!array_key_exists($ah, $alternativehostusersmails)) {
+            $alternativehostnonusers[] = $ah;
+        }
+    }
+
+    return $alternativehostnonusers;
+}
+
+/**
+ * Get the unavailability note based on the Zoom plugin configuration.
+ *
+ * @param object $zoom The Zoom meeting object.
+ * @param bool|null $finished The function needs to know if the meeting is already finished.
+ *                       You can provide this information, if already available, to the function.
+ *                       Otherwise it will determine it with a small overhead.
+ *
+ * @return string The unavailability note.
+ */
+function zoom_get_unavailability_note($zoom, $finished = null) {
+    // Get config.
+    $config = get_config('zoom');
+
+    // Get the plain unavailable string.
+    $strunavailable = get_string('unavailable', 'mod_zoom');
+
+    // If this is a recurring meeting, just use the plain unavailable string.
+    if (!empty($zoom->recurring)) {
+        $unavailabilitynote = $strunavailable;
+
+        // Otherwise we add some more information to the unavailable string.
+    } else {
+        // If we don't have the finished information yet, get it with a small overhead.
+        if ($finished === null) {
+            list($inprogress, $available, $finished) = zoom_get_state($zoom);
+        }
+
+        // If this meeting is still pending.
+        if ($finished !== true) {
+            // If the admin wants to show the leadtime.
+            if (!empty($config->displayleadtime) && $config->firstabletojoin > 0) {
+                $unavailabilitynote = $strunavailable . '<br />' .
+                        get_string('unavailablefirstjoin', 'mod_zoom', array('mins' => ($config->firstabletojoin)));
+
+                // Otherwise.
+            } else {
+                $unavailabilitynote = $strunavailable . '<br />' . get_string('unavailablenotstartedyet', 'mod_zoom');
+            }
+
+            // Otherwise, the meeting has finished.
+        } else {
+            $unavailabilitynote = $strunavailable . '<br />' . get_string('unavailablefinished', 'mod_zoom');
+        }
+    }
+
+    return $unavailabilitynote;
+}
+
+/**
+ * Gets the meeting capacity of a given Zoom user.
+ * Please note: This function does not check if the Zoom user really exists, this has to be checked before calling this function.
+ *
+ * @param string $zoomhostid The Zoom ID of the host.
+ * @param boolean $iswebinar The meeting is a webinar.
+ *
+ * @return int|boolean The meeting capacity of the Zoom user or false if the user does not have any meeting capacity at all.
+ */
+function zoom_get_meeting_capacity(string $zoomhostid, bool $iswebinar = false) {
+    // Get Zoom API service instance.
+    $service = new mod_zoom_webservice();
+
+    // Get the 'feature' section of the user's Zoom settings.
+    $userfeatures = $service->_get_user_settings($zoomhostid)->feature;
+
+    // If this is a webinar.
+    if ($iswebinar == true) {
+        // Get the 'webinar_capacity' value.
+        $meetingcapacity = $userfeatures->webinar_capacity;
+
+        // If the user does not have a webinar capacity for any reason, return.
+        if (is_int($meetingcapacity) == false || $meetingcapacity <= 0) {
+            return false;
+        }
+
+        // If this isn't a webinar but a regular meeting.
+    } else {
+        // Get the 'meeting_capacity' value.
+        $meetingcapacity = $userfeatures->meeting_capacity;
+
+        // If the user does not have a meeting capacity for any reason, return.
+        if (is_int($meetingcapacity) == false || $meetingcapacity <= 0) {
+            return false;
+        }
+
+        // Check if the user has a 'large_meeting' license and, if yes, if this is bigger than the given 'meeting_capacity' value.
+        if ($userfeatures->large_meeting === true &&
+                isset($userfeatures->large_meeting_capacity) &&
+                is_int($userfeatures->large_meeting_capacity) != false &&
+                $userfeatures->large_meeting_capacity > $userfeatures->meeting_capacity) {
+            $meetingcapacity = $userfeatures->large_meeting_capacity;
+        }
+    }
+
+    return $meetingcapacity;
+}
+
+/**
+ * Gets the number of eligible meeting participants in a given context.
+ * Please note: This function only covers users who are enrolled into the given context.
+ * It does _not_ include users who have the necessary capability on a higher context without being enrolled.
+ *
+ * @param context $context The context which we want to check.
+ *
+ * @return int The number of eligible meeting participants.
+ */
+function zoom_get_eligible_meeting_participants(context $context) {
+    global $DB;
+
+    // Compose SQL query.
+    $sqlsnippets = get_enrolled_with_capabilities_join($context, '', 'mod/zoom:view', 0, true);
+    $sql = 'SELECT count(DISTINCT u.id)
+            FROM {user} u '.$sqlsnippets->joins.' WHERE '.$sqlsnippets->wheres;
+
+    // Run query and count records.
+    $eligibleparticipantcount = $DB->count_records_sql($sql, $sqlsnippets->params);
+
+    return $eligibleparticipantcount;
 }
