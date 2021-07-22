@@ -84,9 +84,6 @@ define('ZOOM_DOWNLOADICAL_ENABLE', 1);
 define('ZOOM_CAPACITYWARNING_DISABLE', 0);
 define('ZOOM_CAPACITYWARNING_ENABLE', 1);
 
-//Added for Creating New Users
-define('ZOOM_USER_DOMAIN', 'uregina.ca');
-
 define('ZOOM_MEETING_EXPIRED','ZOOM_MEETING_EXPIRED');
 
 /**
@@ -385,14 +382,16 @@ function zoom_get_state($zoom) {
  * @return string
  */
 function zoom_get_user_id($required = true) {
-    global $USER;
+    global $USER, $DB;
 
     $cache = cache::make('mod_zoom', 'zoomid');
     if (!($zoomuserid = $cache->get($USER->id))) {
         $zoomuserid = false;
         $service = new mod_zoom_webservice();
         try {
-            $zoomuser = $service->get_user($USER->email);
+            //UOFR HACK ADDED
+            $zoomuser = zoom_email_alias($USER,$service);
+            //END OF ADDED
             if ($zoomuser !== false) {
                 $zoomuserid = $zoomuser->id;
             }
@@ -407,49 +406,6 @@ function zoom_get_user_id($required = true) {
     }
 
     return $zoomuserid;
-}
-
-function zoom_get_user_zoomemail($user,$service) {
-
-    $config = get_config('mod_zoom');
-	
-	$emailchk = explode('@',$user->email);
-	
-	if (strpos($emailchk[0],'.')===false) {
-		$zoom_email = strtolower($user->firstname.'.'.$user->lastname.'@'.ZOOM_USER_DOMAIN);
-	} else {
-		$zoom_email = strtolower($user->email);
-	}
-	
-	//try user with first.last@ZOOM_USER_DOMAIN
-    $zoomuser = $service->get_user($zoom_email);
-	
-	if ($zoomuser === false) {
-		//try titlcase
-		$zoom_email = ucfirst($user->firstname).'.'.ucfirst($user->lastname).'@'.ZOOM_USER_DOMAIN;
-		$zoomuser = $service->get_user($zoom_email);
-	}
-	
-    if ($zoomuser === false) {
-
-        //check if zoom account is under user name instead
-        $alias = zoom_email_alias($user);
-
-        //check if alias emails are connected to zoom account
-        $zoomuser = $service->get_user(strtolower($alias));
-
-        if ($zoomuser === false) {
-			//check the actual email field, just in case it works
-			$zoomuser = $service->get_user(strtolower($user->email));
-			
-			if ($zoomuser === false) {
-				return false;
-			}
-        }
-
-    }
-	
-	return $zoomuser;
 }
 
 /**
@@ -553,8 +509,21 @@ function zoom_get_course_instructors($courseid) {
     $teachersmenu = array();
     if ($teachers) {
         foreach ($teachers as $teacher) {
+
             $teacherarray=new stdClass;
+
+            $sql = 'SELECT * FROM {user_info_field} uif WHERE shortname = "zoomemail" ';
+            $uafield = $DB->get_record_sql($sql, [], IGNORE_MISSING);
+        
             $teacherarray->email = $teacher->email;
+
+            if($uafield){
+                $sql = 'SELECT * FROM {user_info_data} uif WHERE fieldid = "'.$uafield->id.'" AND userid = '.$teacher->id;
+                $uainfo = $DB->get_record_sql($sql, [], IGNORE_MISSING);
+                if($uainfo && $uainfo->data!=""){
+                    $teacherarray->email = $uainfo->data;
+                }
+            } 
             $teacherarray->name = fullname($teacher);
             $teachersmenu[] = $teacherarray;
         }
@@ -563,27 +532,34 @@ function zoom_get_course_instructors($courseid) {
     return $teachersmenu;
 }
 
-//Added for new co-host feature
+//UOFR HACK Added for new co-host feature
 /**
 * Get user from db *this forces that all alternative hosts must be in moodle instance
 * @param int $email of user
 * @param user object
 */
 function zoom_get_user_info($email){
-
     global $DB;
 
     $user = $DB->get_record('user', array('email' => $email), '*', IGNORE_MISSING);
+    $emailchk = explode('@',$email);
+	
+	if (!$user) {
+        //check if it is the alternate zoom email
+        $sql = 'SELECT * FROM {user_info_field} uif WHERE shortname = "zoomemail" ';
+        $uafield = $DB->get_record_sql($sql, [], IGNORE_MISSING);
+        
+        if($uafield){
+            $sql = 'SELECT * FROM {user_info_data} uif WHERE fieldid = "'.$uafield->id.'" AND data = "'.$email.'"';
+            $uainfo = $DB->get_record_sql($sql, [], IGNORE_MISSING);
 
-	$emailchk = explode('@',$email);
-	
-	if (!$user && strpos($emailchk[0],'.')===false) {
-		//check by username?
-		$user = $DB->get_record('user', array('username' => $emailchk[0]), '*', IGNORE_MISSING);
+            if($uainfo){
+                $user = $DB->get_record('user', array('id' => $uainfo->userid), '*', IGNORE_MISSING);
+            }     
+        }
 	}
-	
     return $user;
-}
+}//END OF ADDED
 
 /**
 * Get user from db *this forces that all alternative hosts must be in moodle instance
@@ -641,20 +617,33 @@ function zoom_email_check($email){
         return false;
 }
 
-/**
+/**ADDED
 * Check if user has any alias emails connected to account
 * @param int $email of user
 * @param user object
 */
-function zoom_email_alias($user){
+function zoom_email_alias($user,$service){
 
-    //pulll username from db
-    //$user = zoom_get_user_info($email);
-    //append email to it
-    $alias = $user->username.'@'.ZOOM_USER_DOMAIN;
-    //test if it is their zoom account
-    return $alias;
+    global $DB;
+
+    //check alternative email first
+    $sql = 'SELECT * FROM {user_info_field} uif WHERE shortname = "zoomemail" ';
+    $uafield = $DB->get_record_sql($sql, [], IGNORE_MISSING);
+    
+    if($uafield){
+        $sql = 'SELECT * FROM {user_info_data} uif WHERE fieldid = "'.$uafield->id.'" AND userid = '.$user->id;
+        $uainfo = $DB->get_record_sql($sql, [], IGNORE_MISSING);
+        if($uainfo){
+            if($uainfo->data != "" || $uainfo->data != false){
+                $zoomuser = $service->get_user($uainfo->data);
+                return $zoomuser;
+            }
+        }     
+    }
+    $zoomuser = $service->get_user($user->email);
+    return $zoomuser;
 }
+//END of ADDED
 
 /**
  * Creates a default passcode from the user's Zoom meeting security settings.

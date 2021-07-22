@@ -88,7 +88,7 @@ function zoom_add_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
     
     $service = new mod_zoom_webservice();
     
-    //Added for assign 
+    //UOFR HACK Added for assign 
     if(isset($zoom->assign)){
         $newhost = $service->get_user($zoom->assign);
         //check if hostid matches selected host
