@@ -162,9 +162,11 @@ class mod_zoom_mod_form extends moodleform_mod {
 
             $teacherarray = zoom_get_course_instructors($this->_course->id);
             $teachersmenu = array($zoomuser->email => fullname($USER));
-
+            
             foreach ($teacherarray as $teacher) {
-                $teachersmenu[$teacher->email] = $teacher->name;
+                if(strtolower($zoomuser->email) != strtolower($teacher->email)){
+                    $teachersmenu[$teacher->email] = $teacher->name;
+                }
             }
             $select = $mform->addElement('select', 'assign', get_string('assign', 'zoom'), $teachersmenu);
             //need to set current host here
