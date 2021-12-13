@@ -15,14 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Library of interface functions and constants for module zoom
- *
- * All the core Moodle functions, neeeded to allow the module to work
- * integrated in Moodle should be placed here.
- *
- * All the zoom specific functions, needed to implement all the module
- * logic, should go to locallib.php. This will help to save some memory when
- * Moodle is performing actions across all modules.
+ * Task: update_meetings
  *
  * @package    mod_zoom
  * @copyright  2018 UC Regents
@@ -38,10 +31,6 @@ require_once($CFG->dirroot.'/mod/zoom/locallib.php');
 
 /**
  * Scheduled task to sychronize meeting data.
- *
- * @package   mod_zoom
- * @copyright 2018 UC Regents
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class update_meetings extends \core\task\scheduled_task {
 
@@ -146,7 +135,13 @@ class update_meetings extends \core\task\scheduled_task {
                     if ($zoom->name != $newzoom->name) {
                         $courseidstoupdate[] = $newzoom->course;
                     }
+                } else {
+                    // Show trace message.
+                    mtrace('  => Skipped Zoom meeting activity for Zoom meeting ID ' . $zoom->meeting_id . ' as unchanged');
+                }
 
+                // Update the calendar events.
+                if (!$zoom->recurring && $changed) {
                     // Check if calendar needs updating.
                     foreach ($calendarfields as $field) {
                         if ($zoom->$field != $newzoom->$field) {
@@ -158,10 +153,15 @@ class update_meetings extends \core\task\scheduled_task {
                             break;
                         }
                     }
-                } else {
+                } else if ($zoom->recurring) {
                     // Show trace message.
-                    mtrace('  => Skipped Zoom meeting activity for Zoom meeting ID ' . $zoom->meeting_id . ' as unchanged');
+                    mtrace('  => Updated calendar items for recurring Zoom meeting ID ' . $zoom->meeting_id);
+                    zoom_calendar_item_update($newzoom);
                 }
+
+                // Update tracking fields for meeting.
+                mtrace('  => Updated tracking fields for Zoom meeting ID ' . $zoom->meeting_id);
+                zoom_sync_meeting_tracking_fields($zoom->id, $response->tracking_fields ?? array());
             }
         }
 

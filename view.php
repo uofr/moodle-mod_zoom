@@ -63,7 +63,7 @@ $userisrealhost = ($zoomuserid === $zoom->host_id);
 $alternativehosts = zoom_get_alternative_host_array_from_string($zoom->alternative_hosts);
 
 // Check if this user is the host or an alternative host.
-$userishost = ($userisrealhost || in_array($USER->email, $alternativehosts, true));
+$userishost = ($userisrealhost || in_array(zoom_get_api_identifier($USER), $alternativehosts, true));
 
 // Get Zoom webservice instance.
 $service = new mod_zoom_webservice();
@@ -102,6 +102,9 @@ if ($hostuser) {
     $hostmoodleuser->lastnamephonetic = '';
     $hostmoodleuser->middlename = '';
 }
+
+$meetinginvite = $service->get_meeting_invitation($zoom)->get_display_string($cm->id);
+$isrecurringnotime = ($zoom->recurring && $zoom->recurrence_type == ZOOM_RECURRINGTYPE_NOTIME);
 
 $stryes = get_string('yes');
 $strno = get_string('no');
@@ -233,16 +236,37 @@ $table->align = array('center', 'left');
 $table->size = array('35%', '65%');
 $numcolumns = 2;
 
-// Show start/end date or recurring flag.
-if ($zoom->recurring) {
+// Show start/end date or recurring meeting information.
+if ($isrecurringnotime) {
     $table->data[] = array(get_string('recurringmeeting', 'mod_zoom'), get_string('recurringmeetingexplanation', 'mod_zoom'));
+} else if ($zoom->recurring && $zoom->recurrence_type != ZOOM_RECURRINGTYPE_NOTIME) {
+    $table->data[] = array(get_string('recurringmeeting', 'mod_zoom'), get_string('recurringmeetingthisis', 'mod_zoom'));
+    $nextoccurrence = zoom_get_next_occurrence($zoom);
+    if ($nextoccurrence > 0) {
+        $table->data[] = array(get_string('nextoccurrence', 'mod_zoom'), userdate($nextoccurrence));
+    } else {
+        $table->data[] = array(get_string('nextoccurrence', 'mod_zoom'), get_string('nooccurrenceleft', 'mod_zoom'));
+    }
+    $table->data[] = array($strduration, format_time($zoom->duration));
 } else {
     $table->data[] = array($strtime, userdate($zoom->start_time));
     $table->data[] = array($strduration, format_time($zoom->duration));
 }
 
+// Show recordings section if option enabled to view recordings.
+if (!empty($config->viewrecordings)) {
+    $recordinghtml = null;
+    $recordingaddurl = new moodle_url('/mod/zoom/recordings.php', array('id' => $cm->id));
+    $recordingaddbutton = html_writer::div(get_string('recordingview', 'mod_zoom'), 'btn btn-primary');
+    $recordingaddbuttonhtml = html_writer::link($recordingaddurl, $recordingaddbutton, array('target' => '_blank'));
+    $recordingaddhtml = html_writer::div($recordingaddbuttonhtml);
+    $recordinghtml .= $recordingaddhtml;
+
+    $table->data[] = array(get_string('recordings', 'mod_zoom'), $recordinghtml);
+}
+
 // Display add-to-calendar button if meeting was found and isn't recurring and if the admin did not disable the feature.
-if ($config->showdownloadical != ZOOM_DOWNLOADICAL_DISABLE && (!($showrecreate || $zoom->recurring))) {
+if ($config->showdownloadical != ZOOM_DOWNLOADICAL_DISABLE && !$showrecreate && !$isrecurringnotime) {
     $icallink = new moodle_url('/mod/zoom/exportical.php', array('id' => $cm->id));
     $calendaricon = $OUTPUT->pix_icon('i/calendar', get_string('calendariconalt', 'mod_zoom'));
     $calendarbutton = html_writer::div($calendaricon . ' ' . get_string('downloadical', 'mod_zoom'), 'btn btn-primary');
@@ -251,10 +275,10 @@ if ($config->showdownloadical != ZOOM_DOWNLOADICAL_DISABLE && (!($showrecreate |
 }
 
 // Show meeting status.
-if (!$zoom->recurring) {
-    if ($zoom->exists_on_zoom == ZOOM_MEETING_EXPIRED) {
-        $status = get_string('meeting_nonexistent_on_zoom', 'mod_zoom');
-    } else if ($finished) {
+if ($zoom->exists_on_zoom == ZOOM_MEETING_EXPIRED) {
+    $status = get_string('meeting_nonexistent_on_zoom', 'mod_zoom');
+} else if (!$isrecurringnotime) {
+    if ($finished) {
         $status = get_string('meeting_finished', 'mod_zoom');
     } else if ($inprogress) {
         $status = get_string('meeting_started', 'mod_zoom');

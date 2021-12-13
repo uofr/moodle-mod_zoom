@@ -32,6 +32,62 @@ server is properly synchronized with the time servers.
 
 ## Changelog
 
+v4.3.1
+
+- Fix database schema alignment and associated code #335 (thanks @TomoTsuyuki)
+- Run "Update Meetings" task once per day by default #342 (thanks @deraadt for reporting)
+  - Note: You may need to manually adjust your task schedule on existing installs.
+
+v4.3
+
+- Add support for Zoom Cloud Recordings #292 (thanks @jwalits, @nstefanski, @abias, ETH Zürich)
+  - New setting `zoom/viewrecordings`
+  - New per activity setting `recordings_visible_default`
+- Fix tracking field PHP notices #337 (thanks @alina-kiz, @ndunand, @haietza)
+
+v4.2.1
+
+- Fix PHP 8 deprecation warning #332 (thanks @ndunand)
+- Fix duplicate column name on "All Meetings" page #330
+
+v4.2
+
+- Add support for Zoom Tracking Fields #308 (thanks @haietza, @porcospino)
+  - New setting `zoom/defaulttrackingfields`
+- Send plaintext version of Moodle intro to Zoom #290 (thanks @Ottendahl, @abias, @yanus for reporting)
+  - Note: To avoid losing Moodle's rich text, we no longer synchronize Zoom's topic back to Moodle.
+- Reduce zoom_refresh_events overreach; fix 'quick edit' issue #320 (thanks @alina-kiz, @jwalits for testing)
+- Add error handling and improve consistency in Zoom activity restore #328 (thanks @jonof)
+
+v4.1.3
+
+- Always use a fresh copy of start_url #316 (thanks @ShilVita for reporting)
+- Synchronize calendar events consistently #319 (thanks @martinoesterreicher for reporting)
+- Update JWT library to v5.4.0 #312
+
+v4.1.2
+
+- Make loadmeeting consistent via web and mobile (event, completion, grade, etc) #307 (thanks @nstefanski)
+
+v4.1.1
+
+- Fix invitation class not found exception #296 (thanks @byvamo for reporting)
+
+v4.1
+
+- Allow configuration of Zoom identifier #280 (thanks @jwalits, @abias, @jonlan)
+  - New setting `zoom/apiidentifier`
+- Allow configuration of Zoom API endpoint #293 (thanks @abias, @didier63)
+  - New setting `zoom/apiendpoint`
+- Use case-insensitive email comparison for schedule_for #295 (thanks @stopfstedt, @briannwar)
+
+v4.0
+
+- Fully support recurring meetings #258 (thanks @abias, @jwalits, ETH Zürich)
+  - New setting `zoom/invitationremoveicallink`
+  - Backward incompatible change: exported iCal events now match Moodle's uid format
+- Retroactively fix database schema defaults #291 (thanks @foxlapinou for reporting)
+
 v3.8.1
 
 - Only allow real host to use start_url #285 (thanks @abias for reporting)

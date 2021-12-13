@@ -48,7 +48,7 @@ $strname = get_string('modulenameplural', 'mod_zoom');
 $strnew = get_string('newmeetings', 'mod_zoom');
 $strold = get_string('oldmeetings', 'mod_zoom');
 
-$strtopic = get_string('topic', 'mod_zoom');
+$strtitle = get_string('title', 'mod_zoom');
 $strwebinar = get_string('webinar', 'mod_zoom');
 $strtime = get_string('meeting_time', 'mod_zoom');
 $strduration = get_string('duration', 'mod_zoom');
@@ -56,7 +56,6 @@ $stractions = get_string('actions', 'mod_zoom');
 $strsessions = get_string('sessions', 'mod_zoom');
 
 $strmeetingstarted = get_string('meeting_started', 'mod_zoom');
-$strstart = get_string('start', 'mod_zoom');
 $strjoin = get_string('join', 'mod_zoom');
 
 $PAGE->set_url('/mod/zoom/index.php', array('id' => $id));
@@ -78,11 +77,11 @@ $zoomuserid = zoom_get_user_id(false);
 
 $newtable = new html_table();
 $newtable->attributes['class'] = 'generaltable mod_index';
-$newhead = array($strtopic, $strtime, $strduration, $stractions);
+$newhead = array($strtitle, $strtime, $strduration, $stractions);
 $newalign = array('left', 'left', 'left', 'left');
 
 $oldtable = new html_table();
-$oldhead = array($strtopic, $strtime);
+$oldhead = array($strtitle, $strtime);
 $oldalign = array('left', 'left');
 
 // Show section column if there are sections.
@@ -124,8 +123,22 @@ foreach ($zooms as $z) {
     if ($z->webinar) {
         $row[1] .= " ($strwebinar)";
     }
-    // Recurring meetings have no start time or duration.
-    $displaytime = $z->recurring ? get_string('recurringmeetinglong', 'mod_zoom') : userdate($z->start_time);
+    // Get start time column information.
+    if ($z->recurring && $z->recurrence_type == ZOOM_RECURRINGTYPE_NOTIME) {
+        $displaytime = get_string('recurringmeeting', 'mod_zoom');
+        $displaytime .= html_writer::empty_tag('br');
+        $displaytime .= get_string('recurringmeetingexplanation', 'mod_zoom');
+    } else if ($z->recurring && $z->recurrence_type != ZOOM_RECURRINGTYPE_NOTIME) {
+        $displaytime = get_string('recurringmeeting', 'mod_zoom');
+        $displaytime .= html_writer::empty_tag('br');
+        if (($nextoccurrence = zoom_get_next_occurrence($z)) > 0) {
+            $displaytime .= get_string('nextoccurrence', 'mod_zoom').': '.userdate($nextoccurrence);
+        } else {
+            $displaytime .= get_string('nooccurrenceleft', 'mod_zoom');
+        }
+    } else {
+        $displaytime = userdate($z->start_time);
+    }
 
     $report = new moodle_url('report.php', array('id' => $cm->id));
     $sessions = html_writer::link($report, $strsessions);
@@ -145,18 +158,12 @@ foreach ($zooms as $z) {
             $row[2] = $displaytime;
         }
 
-        $row[3] = $z->recurring ? '--' : format_time($z->duration);
+        $row[3] = ($z->recurring && $z->recurrence_type == ZOOM_RECURRINGTYPE_NOTIME) ? '--' : format_time($z->duration);
 
         if ($available) {
-            if ($zoomuserid === false || $zoomuserid != $z->host_id) {
-                $buttonhtml = html_writer::tag('button', $strjoin,
-                        array('type' => 'submit', 'class' => 'btn btn-primary'));
-                $aurl = new moodle_url('/mod/zoom/loadmeeting.php', array('id' => $cm->id));
-            } else {
-                $buttonhtml = html_writer::tag('button', $strstart,
-                        array('type' => 'submit', 'class' => 'btn btn-success'));
-                $aurl = new moodle_url($z->start_url);
-            }
+            $buttonhtml = html_writer::tag('button', $strjoin,
+                array('type' => 'submit', 'class' => 'btn btn-primary'));
+            $aurl = new moodle_url('/mod/zoom/loadmeeting.php', array('id' => $cm->id));
             $buttonhtml .= html_writer::input_hidden_params($aurl);
             $row[4] = html_writer::tag('form', $buttonhtml, array('action' => $aurl->out_omit_querystring(), 'target' => '_blank'));
         } else {

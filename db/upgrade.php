@@ -432,6 +432,32 @@ function xmldb_zoom_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2020080102, 'zoom');
     }
 
+    if ($oldversion < 2020100800) {
+        // Changing the default of field option_host_video on table zoom to 0.
+        $table = new xmldb_table('zoom');
+        $field = new xmldb_field('option_host_video', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'option_start_type');
+
+        // Launch change of default for field option_host_video.
+        $dbman->change_field_default($table, $field);
+
+        // Changing the default of field option_participants_video on table zoom to 0.
+        $table = new xmldb_table('zoom');
+        $field = new xmldb_field('option_participants_video', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'option_host_video');
+
+        // Launch change of default for field option_participants_video.
+        $dbman->change_field_default($table, $field);
+
+        // Changing the default of field option_mute_upon_entry on table zoom to 1.
+        $table = new xmldb_table('zoom');
+        $field = new xmldb_field('option_mute_upon_entry', XMLDB_TYPE_INTEGER, '1', null, null, null, '1', 'option_audio');
+
+        // Launch change of default for field option_participants_video.
+        $dbman->change_field_default($table, $field);
+
+        // Zoom savepoint reached.
+        upgrade_mod_savepoint(true, 2020100800, 'zoom');
+    }
+
     if ($oldversion < 2020120800) {
         // Delete config no longer used.
         set_config('calls_left', null, 'mod_zoom');
@@ -491,6 +517,203 @@ function xmldb_zoom_upgrade($oldversion) {
 
         // Zoom savepoint reached.
         upgrade_mod_savepoint(true, 2021030300, 'zoom');
+    }
+
+    if ($oldversion < 2021081900) {
+        $table = new xmldb_table('zoom');
+
+        // Define and conditionally add field recurrence_type.
+        $field = new xmldb_field('recurrence_type', XMLDB_TYPE_INTEGER, '1', null, null, null, null, 'recurring');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define and conditionally add field repeat_interval.
+        $field = new xmldb_field('repeat_interval', XMLDB_TYPE_INTEGER, '2', null, null, null, null, 'recurrence_type');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define and conditionally add field weekly_days.
+        $field = new xmldb_field('weekly_days', XMLDB_TYPE_CHAR, '14', null, null, null, null, 'repeat_interval');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define and conditionally add field monthly_day.
+        $field = new xmldb_field('monthly_day', XMLDB_TYPE_INTEGER, '2', null, null, null, null, 'weekly_days');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define and conditionally add field monthly_week.
+        $field = new xmldb_field('monthly_week', XMLDB_TYPE_INTEGER, '2', null, null, null, null, 'monthly_day');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define and conditionally add field monthly_week_day.
+        $field = new xmldb_field('monthly_week_day', XMLDB_TYPE_INTEGER, '1', null, null, null, null, 'monthly_week');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define and conditionally add field monthly_repeat_option.
+        $field = new xmldb_field('monthly_repeat_option', XMLDB_TYPE_INTEGER, '1', null, null, null, null, 'monthly_week_day');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define and conditionally add field end_times.
+        $field = new xmldb_field('end_times', XMLDB_TYPE_INTEGER, '1', null, null, null, null, 'monthly_week_day');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define and conditionally add field end_date_time.
+        $field = new xmldb_field('end_date_time', XMLDB_TYPE_INTEGER, '12', null, null, null, null, 'end_times');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define and conditionally add field end_date_option.
+        $field = new xmldb_field('end_date_option', XMLDB_TYPE_INTEGER, '1', null, null, null, null, 'end_date_time');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // For a time these defaults were not being updated but needed to be. This should catch them up.
+
+        // Changing the default of field option_host_video on table zoom to 0.
+        $table = new xmldb_table('zoom');
+        $field = new xmldb_field('option_host_video', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'option_start_type');
+
+        // Launch change of default for field option_host_video.
+        $dbman->change_field_default($table, $field);
+
+        // Changing the default of field option_participants_video on table zoom to 0.
+        $table = new xmldb_table('zoom');
+        $field = new xmldb_field('option_participants_video', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'option_host_video');
+
+        // Launch change of default for field option_participants_video.
+        $dbman->change_field_default($table, $field);
+
+        // Changing the default of field option_mute_upon_entry on table zoom to 1.
+        $table = new xmldb_table('zoom');
+        $field = new xmldb_field('option_mute_upon_entry', XMLDB_TYPE_INTEGER, '1', null, null, null, '1', 'option_audio');
+
+        // Launch change of default for field option_participants_video.
+        $dbman->change_field_default($table, $field);
+
+        // Zoom savepoint reached.
+        upgrade_mod_savepoint(true, 2021081900, 'zoom');
+    }
+
+    if ($oldversion < 2021111100) {
+        // Define table zoom_meeting_tracking_fields to be created.
+        $table = new xmldb_table('zoom_meeting_tracking_fields');
+
+        // Adding fields to table zoom_meeting_tracking_fields.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('meeting_id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('tracking_field', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('value', XMLDB_TYPE_TEXT, null, null, null, null, null);
+
+        // Adding keys to table zoom_meeting_tracking_fields.
+        $table->add_key('id_primary', XMLDB_KEY_PRIMARY, array('id'));
+
+        // Adding indexes to table zoom_meeting_tracking_fields.
+        $table->add_index('meeting_id', XMLDB_INDEX_NOTUNIQUE, array('meeting_id'));
+        $table->add_index('tracking_field', XMLDB_INDEX_NOTUNIQUE, array('tracking_field'));
+
+        // Conditionally launch create table for zoom_meeting_tracking_fields.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Zoom savepoint reached.
+        upgrade_mod_savepoint(true, 2021111100, 'zoom');
+    }
+
+    if ($oldversion < 2021111800) {
+        // Define table zoom_meeting_recordings to be created.
+        $table = new xmldb_table('zoom_meeting_recordings');
+
+        // Adding fields to table zoom_meeting_recordings.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('zoomid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('meetinguuid', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('zoomrecordingid', XMLDB_TYPE_CHAR, '36', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('name', XMLDB_TYPE_CHAR, '300', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('externalurl', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+        $table->add_field('passcode', XMLDB_TYPE_CHAR, '30', null, null, null, null);
+        $table->add_field('recordingtype', XMLDB_TYPE_CHAR, '30', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('recordingstart', XMLDB_TYPE_INTEGER, '12', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('showrecording', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '12', null, null, null, null);
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '12', null, null, null, null);
+
+        // Adding keys to table zoom_meeting_recordings.
+        $table->add_key('id_primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->add_key('zoomid_foreign', XMLDB_KEY_FOREIGN, array('zoomid'), 'zoom', array('id'));
+
+        // Conditionally launch create table for zoom_meeting_recordings.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table zoom_meeting_recordings_view to be created.
+        $table = new xmldb_table('zoom_meeting_recordings_view');
+
+        // Adding fields to table zoom_meeting_recordings_view.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('recordingsid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('viewed', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '12', null, null, null, null);
+
+        // Adding keys to table zoom_meeting_recordings_view.
+        $table->add_key('id_primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->add_key('recordingsid_foreign', XMLDB_KEY_FOREIGN, array('recordingsid'), 'zoom_meeting_recordings', array('id'));
+
+        // Adding indexes to table zoom_meeting_recordings_view.
+        $table->add_index('userid', XMLDB_INDEX_NOTUNIQUE, array('userid'));
+
+        // Conditionally launch create table for zoom_meeting_recordings_view.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Add new field for recordings_visible_default.
+        $table = new xmldb_table('zoom');
+        // Define field recordings_visible_default to be added to zoom.
+        $field = new xmldb_field('recordings_visible_default', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1',
+                'alternative_hosts');
+
+        // Conditionally launch add field recordings_visible_default.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Zoom savepoint reached.
+        upgrade_mod_savepoint(true, 2021111800, 'zoom');
+    }
+
+    if ($oldversion < 2021112900) {
+        // Define table zoom_meeting_details to be created.
+        $table = new xmldb_table('zoom_meeting_details');
+        // Conditionally launch add key uuid_unique.
+        if (!$table->getKey('uuid_unique')) {
+            $key = new xmldb_key('uuid_unique', XMLDB_KEY_UNIQUE, ['uuid']);
+            $dbman->add_key($table, $key);
+        }
+
+        // Launch drop key meeting_unique.
+        $key = new xmldb_key('meeting_unique', XMLDB_KEY_UNIQUE, ['meeting_id', 'uuid']);
+        $dbman->drop_key($table, $key);
+
+        // Zoom savepoint reached.
+        upgrade_mod_savepoint(true, 2021112900, 'zoom');
     }
 
     return true;
