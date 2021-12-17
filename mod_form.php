@@ -155,6 +155,10 @@ class mod_zoom_mod_form extends moodleform_mod {
 
         // Add title (stored in database as 'name').
         $mform->addElement('text', 'name', get_string('title', 'zoom'), array('size' => '64'));
+        $mform->setType('name', PARAM_TEXT);
+        $mform->addRule('name', null, 'required', null, 'client');
+        $mform->addRule('name', get_string('maximumchars', '', 300), 'maxlength', 300, 'client');
+
         //Add an assign instructor field if user has the capbility to do so
         $context = context_course::instance($this->_course->id);
         if (has_capability('mod/zoom:assign', $context)) {
@@ -184,13 +188,6 @@ class mod_zoom_mod_form extends moodleform_mod {
             }else
                 $select->setSelected($zoomuser->email);
         }
-
-        // Add topic (stored in database as 'name').
-        $mform->addElement('text', 'name', get_string('topic', 'zoom'), array('size' => '64'));
-        $mform->setType('name', PARAM_TEXT);
-        $mform->addRule('name', null, 'required', null, 'client');
-        $mform->addRule('name', get_string('maximumchars', '', 300), 'maxlength', 300, 'client');
-
         // Add description 'intro' and 'introformat'.
         $this->standard_intro_elements();
 
