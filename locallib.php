@@ -102,8 +102,6 @@ define('ZOOM_API_ENDPOINT_GLOBAL', 'global');
 define('ZOOM_API_URL_EU', 'https://eu01api-www4local.zoom.us/v2/');
 define('ZOOM_API_URL_GLOBAL', 'https://api.zoom.us/v2/');
 
-define('ZOOM_MEETING_EXPIRED','ZOOM_MEETING_EXPIRED');
-
 /**
  * Entry not found on Zoom.
  */
@@ -237,11 +235,9 @@ function zoom_fatal_error($errorcode, $module='', $continuelink='', $a=null) {
     $output .= $OUTPUT->header();
 
     // Output message without messing with HTML content of error.
-    $message = ($errorcode=='zoomerr_usernotfound') ? get_string($errorcode, $module, $a) : '<p class="errormessage">' . get_string($errorcode, $module, $a) . '</p>';
-	
-	$warnstate = ($errorcode=='zoomerr_usernotfound') ? 'warning' : 'danger';
-	
-    $output .= $OUTPUT->box($message, 'errorbox alert alert-'.$warnstate, null, array('data-rel' => 'fatalerror'));
+    $message = '<p class="errormessage">' . get_string($errorcode, $module, $a) . '</p>';
+
+    $output .= $OUTPUT->box($message, 'errorbox alert alert-danger', null, array('data-rel' => 'fatalerror'));
 
     if ($CFG->debugdeveloper) {
         if (!empty($debuginfo)) {
@@ -480,20 +476,16 @@ function zoom_get_user_id($required = true) {
         $zoomuserid = false;
         $service = new mod_zoom_webservice();
         try {
-            //UOFR HACK ADDED
-            $zoomuser = zoom_email_alias($USER,$service);
-            //END OF ADDED
-            if ($zoomuser !== false) {
+            $zoomuser = $service->get_user(zoom_get_api_identifier($USER));
+            if ($zoomuser !== false && isset($zoomuser->id) && ($zoomuser->id !== false)) {
                 $zoomuserid = $zoomuser->id;
+                $cache->set($USER->id, $zoomuserid);
             }
         } catch (moodle_exception $error) {
             if ($required) {
                 throw $error;
-            } else {
-                $zoomuserid = $zoomuser->id;
             }
         }
-        $cache->set($USER->id, $zoomuserid);
     }
 
     return $zoomuserid;
