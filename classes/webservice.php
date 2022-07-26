@@ -229,6 +229,7 @@ class mod_zoom_webservice {
         $response = json_decode($response);
 
         $httpstatus = $curl->get_info()['http_code'];
+
         if ($httpstatus >= 400) {
             switch($httpstatus) {
                 case 400:
@@ -617,6 +618,9 @@ class mod_zoom_webservice {
             }
         }
         $data['tracking_fields'] = $tfarray;
+
+        $breakoutroom = array('enable' => true, 'rooms' => $zoom->breakoutrooms);
+        $data['settings']['breakout_room'] = $breakoutroom;
 
         return $data;
     }
