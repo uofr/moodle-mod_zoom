@@ -27,7 +27,9 @@ namespace mod_zoom\task;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/mod/zoom/locallib.php');
+require_once($CFG->dirroot . '/lib/modinfolib.php');
+require_once($CFG->dirroot . '/mod/zoom/lib.php');
+require_once($CFG->dirroot . '/mod/zoom/locallib.php');
 
 /**
  * Scheduled task to sychronize meeting data.
@@ -49,19 +51,14 @@ class update_meetings extends \core\task\scheduled_task {
      * @return boolean
      */
     public function execute() {
-        global $CFG, $DB;
-        $config = get_config('zoom');
-        if (empty($config->apikey)) {
-            mtrace('Skipping task - ', get_string('zoomerr_apikey_missing', 'zoom'));
-            return;
-        } else if (empty($config->apisecret)) {
-            mtrace('Skipping task - ', get_string('zoomerr_apisecret_missing', 'zoom'));
+        global $DB;
+
+        try {
+            $service = zoom_webservice();
+        } catch (\moodle_exception $exception) {
+            mtrace('Skipping task - ', $exception->getMessage());
             return;
         }
-        require_once($CFG->dirroot.'/lib/modinfolib.php');
-        require_once($CFG->dirroot.'/mod/zoom/lib.php');
-        require_once($CFG->dirroot.'/mod/zoom/classes/webservice.php');
-        $service = new \mod_zoom_webservice();
 
         // Show trace message.
         mtrace('Starting to process existing Zoom meeting activities ...');

@@ -65,18 +65,13 @@ $alternativehosts = zoom_get_alternative_host_array_from_string($zoom->alternati
 // Check if this user is the host or an alternative host.
 $userishost = ($userisrealhost || in_array(zoom_get_api_identifier($USER), $alternativehosts, true));
 
-// Get Zoom webservice instance.
-$service = new mod_zoom_webservice();
-
 // Get host user from Zoom.
-$hostuser = false;
 $showrecreate = false;
 if ($zoom->exists_on_zoom == ZOOM_MEETING_EXPIRED) {
     $showrecreate = true;
 } else {
     try {
-        $service->get_meeting_webinar_info($zoom->meeting_id, $zoom->webinar);
-        $hostuser = $service->get_user($zoom->host_id);
+        zoom_webservice()->get_meeting_webinar_info($zoom->meeting_id, $zoom->webinar);
     } catch (moodle_exception $error) {
         $showrecreate = zoom_is_meeting_gone_error($error);
 
@@ -92,24 +87,39 @@ if ($zoom->exists_on_zoom == ZOOM_MEETING_EXPIRED) {
     }
 }
 
-// Compose Moodle user object for host.
-if ($hostuser) {
-    $hostmoodleuser = new stdClass();
-    $hostmoodleuser->firstname = $hostuser->first_name;
-    $hostmoodleuser->lastname = $hostuser->last_name;
-    $hostmoodleuser->alternatename = '';
-    $hostmoodleuser->firstnamephonetic = '';
-    $hostmoodleuser->lastnamephonetic = '';
-    $hostmoodleuser->middlename = '';
+/**
+ * Get the display name for a Zoom user.
+ * This is wrapped in a function to avoid unnecessary API calls.
+ *
+ * @param string $zoomuserid Zoom user ID.
+ * @return ?string
+ */
+function zoom_get_user_display_name($zoomuserid) {
+    try {
+        $hostuser = zoom_get_user($zoomuserid);
+
+        // Compose Moodle user object for host.
+        $hostmoodleuser = new stdClass();
+        $hostmoodleuser->firstname = $hostuser->first_name;
+        $hostmoodleuser->lastname = $hostuser->last_name;
+        $hostmoodleuser->alternatename = '';
+        $hostmoodleuser->firstnamephonetic = '';
+        $hostmoodleuser->lastnamephonetic = '';
+        $hostmoodleuser->middlename = '';
+
+        return fullname($hostmoodleuser);
+    } catch (moodle_exception $error) {
+        return null;
+    }
 }
 
-$meetinginvite = $service->get_meeting_invitation($zoom)->get_display_string($cm->id);
 $isrecurringnotime = ($zoom->recurring && $zoom->recurrence_type == ZOOM_RECURRINGTYPE_NOTIME);
 
 $stryes = get_string('yes');
 $strno = get_string('no');
 $strstart = get_string('start_meeting', 'mod_zoom');
 $strjoin = get_string('join_meeting', 'mod_zoom');
+$strregister = get_string('register', 'mod_zoom');
 $strtime = get_string('meeting_time', 'mod_zoom');
 $strduration = get_string('duration', 'mod_zoom');
 $strpassprotect = get_string('passwordprotected', 'mod_zoom');
@@ -152,7 +162,7 @@ if ($showrecreate) {
 }
 
 // Show intro.
-if ($zoom->intro) {
+if ($zoom->intro && $CFG->branch < '400') {
     echo $OUTPUT->box(format_module_intro('zoom', $zoom, $cm->id), 'generalbox mod_introbox', 'intro');
 }
 
@@ -175,7 +185,7 @@ if (!$showrecreate && $config->showcapacitywarning == true) {
                     'eligiblemeetingparticipants' => $eligiblemeetingparticipants,
                     'zoomprofileurl' => $config->zoomurl.'/profile',
                     'courseparticipantsurl' => $participantspageurl->out(),
-                    'hostname' => fullname($hostmoodleuser));
+                    'hostname' => zoom_get_user_display_name($zoom->host_id));
             $meetingcapacitywarning = get_string('meetingcapacitywarningheading', 'mod_zoom');
             $meetingcapacitywarning .= html_writer::empty_tag('br');
             if ($userisrealhost == true) {
@@ -204,12 +214,27 @@ list($inprogress, $available, $finished) = zoom_get_state($zoom);
 
 // Show join meeting button or unavailability note.
 if (!$showrecreate) {
+    // If registration is required, check the registration.
+    if (!$userishost && $zoom->registration != ZOOM_REGISTRATION_OFF) {
+        $userisregistered = zoom_is_user_registered_for_meeting($USER->email, $zoom->meeting_id, $zoom->webinar);
+
+        // Unregistered users are allowed to register.
+        if (!$userisregistered) {
+            $available = true;
+        }
+    }
+
     if ($available) {
         // Show join meeting button.
         if ($userishost) {
             $buttonhtml = html_writer::tag('button', $strstart, array('type' => 'submit', 'class' => 'btn btn-success'));
         } else {
-            $buttonhtml = html_writer::tag('button', $strjoin, array('type' => 'submit', 'class' => 'btn btn-primary'));
+            $btntext = $strjoin;
+            // If user is not already registered, use register text.
+            if ($zoom->registration != ZOOM_REGISTRATION_OFF && !$userisregistered) {
+                $btntext = $strregister;
+            }
+            $buttonhtml = html_writer::tag('button', $btntext, array('type' => 'submit', 'class' => 'btn btn-primary'));
         }
         $aurl = new moodle_url('/mod/zoom/loadmeeting.php', array('id' => $cm->id));
         $buttonhtml .= html_writer::input_hidden_params($aurl);
@@ -292,8 +317,9 @@ if ($zoom->show_schedule) {
     }
 
     // Show host.
-    if ($hostuser) {
-        $table->data[] = array($strhost, fullname($hostmoodleuser));
+    $hostdisplayname = zoom_get_user_display_name($zoom->host_id);
+    if (isset($hostdisplayname)) {
+        $table->data[] = array($strhost, $hostdisplayname);
     }
 
     // Display alternate hosts if they exist and if the admin did not disable the feature.
@@ -444,7 +470,7 @@ if ($zoom->show_media) {
             && ($zoom->option_audio === ZOOM_AUDIO_BOTH || $zoom->option_audio === ZOOM_AUDIO_TELEPHONY)
             && ($userishost || has_capability('mod/zoom:viewdialin', $context))) {
         // Get meeting invitation from Zoom.
-        $meetinginvite = $service->get_meeting_invitation($zoom)->get_display_string($cm->id);
+        $meetinginvite = zoom_webservice()->get_meeting_invitation($zoom)->get_display_string($cm->id);
         // Show meeting invitation if there is any.
         if (!empty($meetinginvite)) {
             $meetinginvitetext = str_replace("\r\n", '<br/>', $meetinginvite);

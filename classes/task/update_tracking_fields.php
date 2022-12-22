@@ -26,7 +26,8 @@ namespace mod_zoom\task;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/mod/zoom/locallib.php');
+require_once($CFG->dirroot . '/mod/zoom/lib.php');
+require_once($CFG->dirroot . '/mod/zoom/locallib.php');
 
 /**
  * Scheduled task to sychronize tracking field data.
@@ -48,17 +49,12 @@ class update_tracking_fields extends \core\task\scheduled_task {
      * @return boolean
      */
     public function execute() {
-        global $CFG;
-        $config = get_config('zoom');
-        if (empty($config->apikey)) {
-            mtrace('Skipping task - ', get_string('zoomerr_apikey_missing', 'zoom'));
-            return;
-        } else if (empty($config->apisecret)) {
-            mtrace('Skipping task - ', get_string('zoomerr_apisecret_missing', 'zoom'));
+        try {
+            zoom_webservice();
+        } catch (\moodle_exception $exception) {
+            mtrace('Skipping task - ', $exception->getMessage());
             return;
         }
-
-        require_once($CFG->dirroot . '/mod/zoom/lib.php');
 
         // Show trace message.
         mtrace('Starting to process existing Zoom tracking fields ...');
