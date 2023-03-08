@@ -27,9 +27,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/course/moodleform_mod.php');
-require_once($CFG->dirroot.'/mod/zoom/lib.php');
-require_once($CFG->dirroot.'/mod/zoom/locallib.php');
+require_once($CFG->dirroot . '/course/moodleform_mod.php');
+require_once($CFG->dirroot . '/mod/zoom/lib.php');
+require_once($CFG->dirroot . '/mod/zoom/locallib.php');
 
 /**
  * Module instance settings form
@@ -95,6 +95,7 @@ class mod_zoom_mod_form extends moodleform_mod {
                     // use true to avoid a service call.
                     $currenthostschedulers[$this->current->host_id] = true;
                 }
+
                 $canschedule = array_intersect_key($canschedule, $currenthostschedulers);
             }
 
@@ -107,11 +108,12 @@ class mod_zoom_mod_form extends moodleform_mod {
                 if (isset($scheduleusers[$zoomemail])) {
                     continue;
                 }
-                //UOFR HACK
-                if ($zoomemail === strtolower($zoomuser->email)) {
+
+                if ($zoomemail === strtolower($USER->email)) {
                     $scheduleusers[$zoomemail] = get_string('scheduleforself', 'zoom');
                     continue;
                 }
+
                 foreach ($moodleusers as $muser) {
                     if ($zoomemail === strtolower($muser->email)) {
                         $scheduleusers[$zoomemail] = fullname($muser);
@@ -242,6 +244,7 @@ class mod_zoom_mod_form extends moodleform_mod {
         for ($i = 1; $i <= 90; $i++) {
             $options[$i] = $i;
         }
+
         $group = [];
         $group[] = $mform->createElement('select', 'repeat_interval', '', $options);
         $htmlspantextstart = '<span class="repeat_interval" id="interval_';
@@ -262,6 +265,7 @@ class mod_zoom_mod_form extends moodleform_mod {
             $group[] = $mform->createElement('advcheckbox', $weekdayid, '',
                 $weekday, null, [0, $key]);
         }
+
         $mform->addGroup($group, 'weekly_days_group', get_string('occurson', 'zoom'), ' ', false);
         $mform->hideif('weekly_days_group', 'recurrence_type', 'noteq', ZOOM_RECURRINGTYPE_WEEKLY);
         $mform->hideif('weekly_days_group', 'recurring', 'notchecked');
@@ -278,6 +282,7 @@ class mod_zoom_mod_form extends moodleform_mod {
         for ($i = 1; $i <= 31; $i++) {
             $monthoptions[$i] = $i;
         }
+
         $monthlyweekoptions = zoom_get_monthweek_options();
 
         $group = [];
@@ -304,6 +309,7 @@ class mod_zoom_mod_form extends moodleform_mod {
         for ($i = 1; $i <= 50; $i++) {
             $maxoptions[$i] = $i;
         }
+
         $group = [];
         $group[] = $mform->createElement(
             'radio',
@@ -348,6 +354,7 @@ class mod_zoom_mod_form extends moodleform_mod {
                     if (!$haswebinarlicense) {
                         $webinarattr = ['disabled' => true, 'group' => null];
                     }
+
                     $mform->addElement('advcheckbox', 'webinar', get_string('webinar', 'zoom'),
                             get_string('webinarthisis', 'zoom'), $webinarattr);
                     $mform->setDefault('webinar', $config->webinardefault);
@@ -374,6 +381,7 @@ class mod_zoom_mod_form extends moodleform_mod {
                     $mform->addElement('static', $key . '_recommended_values', null,
                         get_string('trackingfields_recommendedvalues', 'mod_zoom') . $config->$rvprop);
                 }
+
                 $requiredproperty = 'tf_' . $key . '_required';
                 if (!empty($config->$requiredproperty)) {
                     $mform->addRule($key, null, 'required', null, 'client');
@@ -467,6 +475,7 @@ class mod_zoom_mod_form extends moodleform_mod {
         } else {
             $mform->setDefault('requirepasscode', 1);
         }
+
         $mform->addHelpButton('requirepasscode', 'requirepasscode', 'zoom');
 
         // Set default passcode and description from Zoom security settings.
@@ -508,6 +517,7 @@ class mod_zoom_mod_form extends moodleform_mod {
                     $encryptionattr = ['disabled' => true];
                     $defaultencryptiontype = ZOOM_ENCRYPTION_TYPE_ENHANCED;
                 }
+
                 $mform->addGroup([
                         $mform->createElement('radio', 'option_encryption_type', '',
                                 get_string('option_encryption_type_enhancedencryption', 'zoom'),
@@ -520,6 +530,7 @@ class mod_zoom_mod_form extends moodleform_mod {
                 $mform->addHelpButton('option_encryption_type_group', 'option_encryption_type', 'zoom');
                 $mform->disabledIf('option_encryption_type_group', 'webinar', 'checked');
             }
+
             $mform->setType('option_encryption_type', PARAM_ALPHANUMEXT);
         }
 
@@ -627,7 +638,6 @@ class mod_zoom_mod_form extends moodleform_mod {
         $this->showschedulingprivilege = $showschedulingprivilege;
         $showalternativehosts = ($config->showalternativehosts != ZOOM_ALTERNATIVEHOSTS_DISABLE);
         if ($showschedulingprivilege || $showalternativehosts) {
-
             // Adding the "host" fieldset, where all settings relating to defining the meeting host are shown.
             $mform->addElement('header', 'general', get_string('host', 'mod_zoom'));
 
@@ -682,6 +692,7 @@ class mod_zoom_mod_form extends moodleform_mod {
                 } else {
                     $mform->setDefault('schedule_for', strtolower(zoom_get_api_identifier($USER)));
                 }
+
                 $mform->addHelpButton('schedule_for', 'schedulefor', 'zoom');
 
                 if ($allowrecordingchangeoption) {
@@ -856,11 +867,13 @@ class mod_zoom_mod_form extends moodleform_mod {
                 unset($data->end_times);
                 unset($data->end_date_time);
             }
+
             // If weekly recurring is not selected, unset weekly options.
             if ($data->recurrence_type != ZOOM_RECURRINGTYPE_WEEKLY) {
                 // Unset the weekly fields.
                 $data = zoom_remove_weekly_options($data);
             }
+
             // If monthly recurring is not selected, unset monthly options.
             if ($data->recurrence_type != ZOOM_RECURRINGTYPE_MONTHLY) {
                 // Unset the weekly fields.
@@ -984,6 +997,7 @@ class mod_zoom_mod_form extends moodleform_mod {
                     break;
                 }
             }
+
             if (!$scheduleok) {
                 $errors['schedule_for'] = get_string('invalidscheduleuser', 'mod_zoom');
             }
@@ -1038,9 +1052,11 @@ class mod_zoom_mod_form extends moodleform_mod {
                         $weekdaynumbers[] = $i;
                     }
                 }
+
                 if (empty($weekdaynumbers)) {
                     $errors['weekly_days_group'] = get_string('err_weekly_days', 'zoom');
                 }
+
                 // For weekly, maximum is 12 weeks.
                 if ($data['repeat_interval'] > 12) {
                     $errors['repeat_group'] = get_string('err_repeat_weekly_interval', 'zoom');
@@ -1058,6 +1074,7 @@ class mod_zoom_mod_form extends moodleform_mod {
                 if ($data['end_date_time'] < time()) {
                     $errors['radioenddate'] = get_string('err_end_date', 'zoom');
                 }
+
                 if ($data['end_date_time'] < $data['start_time']) {
                     $errors['radioenddate'] = get_string('err_end_date_before_start', 'zoom');
                 }
