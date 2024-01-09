@@ -193,9 +193,15 @@ class mod_zoom_mod_form extends moodleform_mod {
                         $select->setSelected($zoomuser->email);
                     }
                 }
-            }else
-                $select->setSelected($zoomuser->email);
+            }else {
+                //Joel Dapiawen - Jan 8, 2024
+               //it seems it is missing a {} bracket here.. for else {}
+               //we have to pick the host
+               $select->setSelected($this->current->host_id);
+               // $select->setSelected($zoomuser->email);
+            }
         }
+               
 
         // Add title (stored in database as 'name').
         $mform->addElement('text', 'name', get_string('title', 'zoom'), ['size' => '64']);
@@ -1173,15 +1179,20 @@ class mod_zoom_mod_form extends moodleform_mod {
             }
         }
 
-        //check capability
-        //UOFR HACK ADDED
+        /**
+         * Joel Dapiawen
+         * January 8, 2024
+         * Check host capability
+         */
         if (isset($data['assign'])) {
             $useremail = $data['assign'];
             if($useremail != $USER->email){
                 $user = zoom_get_user_info($useremail);
-                if($user){
-                    $service = new mod_zoom_webservice();
-                    $zoomuser = zoom_email_alias($user,$service);
+                if($user){   
+                    // we dont need to call class here anymore.
+                    // call the function right away.              
+                    $zoomuser = zoom_email_alias($user);
+                 
                     if(!$zoomuser){
                         $errors['assign'] = $useremail.get_string('err_account_invalid', 'mod_zoom');
                     }
