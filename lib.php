@@ -1044,8 +1044,7 @@ function zoom_update_alternative_host($teacheremails) {
 
             if ($i == $count - 1) {
                 $inputstring .= $teacheremails[$i];
-            }
-            else {
+            } else {
                 $inputstring .= $teacheremails[$i].",";
             }
         }

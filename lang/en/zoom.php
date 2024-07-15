@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-
 /**
  * English strings for zoom.
  *
@@ -115,19 +114,19 @@ $string['end_date_option_by'] = 'By';
 $string['end_date_option_occurrences'] = 'occurrences';
 $string['enddate'] = 'End date';
 $string['endtime'] = 'End time';
-$string['err_downloadicaldisabled'] = 'Downloading Zoom meeting iCal files was disabled.';
 $string['err_account_creation'] = ' was not found on Zoom. Account could not be created.';
 $string['err_account_invalid'] = ' was not found on Zoom.';
 $string['err_account_basic'] = ' needs to be a PRO account on Zoom to be an alternative host.';
+$string['err_downloadicaldisabled'] = 'Downloading Zoom meeting iCal files was disabled.';
 $string['err_downloadicalrecurringnofixed'] = 'Downloading Zoom meeting iCal file is not possible for this meeting as it is a recurring meeting with no fixed time.';
 $string['err_downloadicalrecurringempty'] = 'Downloading Zoom meeting iCal file is not possible for this meeting as it does not contain at least a single occurrence.';
 $string['err_downloadicalrecurringnofixed'] = 'Downloading Zoom meeting iCal file is not possible for this meeting as it is a recurring meeting with no fixed time.';
 $string['err_duration_nonpositive'] = 'The duration must be positive.';
 $string['err_duration_too_long'] = 'The duration cannot exceed 150 hours.';
 $string['err_email_invalid'] = 'Invalid email entered.';
-$string['err_long_timeframe'] = 'Requested time frame too long, showing results of latest month in range.';
 $string['err_end_date'] = 'Recurrence end date cannot be in the past';
 $string['err_end_date_before_start'] = 'Recurrence end date cannot be before start date';
+$string['err_long_timeframe'] = 'Requested time frame too long, showing results of latest month in range.';
 $string['err_invalid_password'] = 'Passcode contains invalid characters.';
 $string['err_long_timeframe'] = 'Requested time frame too long, showing results of latest month in range.';
 $string['err_password'] = 'Passcode may only contain the following characters: [a-z A-Z 0-9 @ - _ *]. Max of 10 characters.';
