@@ -313,15 +313,6 @@ function xmldb_zoom_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2019061800, 'zoom');
     }
 
-    if ($oldversion < 2020072000) {
-        // Change field alternative_hosts from type char(255) to text.
-        $table = new xmldb_table('zoom');
-        $field = new xmldb_field('alternative_hosts', XMLDB_TYPE_TEXT, null, null, null, null, null, 'exists_on_zoom');
-        $dbman->change_field_type($table, $field);
-
-        // Zoom savepoint reached.
-        upgrade_mod_savepoint(true, 2020072000, 'zoom');
-    }
 
     if ($oldversion < 2020042600) {
         // Change field zoom_meeting_participants from type int(11) to char(35),
@@ -353,6 +344,16 @@ function xmldb_zoom_upgrade($oldversion) {
 
         // Zoom savepoint reached.
         upgrade_mod_savepoint(true, 2020042700, 'zoom');
+    }
+
+    if ($oldversion < 2020072000) {
+        // Change field alternative_hosts from type char(255) to text.
+        $table = new xmldb_table('zoom');
+        $field = new xmldb_field('alternative_hosts', XMLDB_TYPE_TEXT, null, null, null, null, null, 'exists_on_zoom');
+        $dbman->change_field_type($table, $field);
+
+        // Zoom savepoint reached.
+        upgrade_mod_savepoint(true, 2020072000, 'zoom');
     }
 
     if ($oldversion < 2020080100) {
