@@ -796,7 +796,7 @@ class webservice {
                     // Changes least_recently_active_user to a basic user so we can use their license.
                     try {
                         $this->_make_call("users/$leastrecentlyactivepaiduserid", ['type' => ZOOM_USER_TYPE_BASIC], 'patch');
-                    } catch(moodle_exception $error) {
+                    } catch (moodle_exception $error) {
                         throw $error;
                     }
                 }
