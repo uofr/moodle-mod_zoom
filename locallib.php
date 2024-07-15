@@ -692,17 +692,14 @@ function zoom_get_selectable_alternative_hosts_list(context $context) {
 
     // Iterate over selectable alternative host users.
     foreach ($users as $u) {
-        /**
-        Note: Basically, if this is the user's own data row, the data row should be skipped
-        But this would then not cover the case when a user is scheduling the meeting
-        _for_ another user and wants to be an alternative host himself
-        As this would have to be handled at runtime in the browser, we just offer all users with the capability as selectable
-        and leave this aspect as possible improvement for the future
-        At least, Zoom does not care if the user who is the host adds himself as alternative host as well
-        Verify that the user really has a Zoom account
-        Furthermore, verify that the user's status is active
-        Adding a pending or inactive user as alternative host will result in a Zoom API error otherwise
-        */
+        // Note: Basically, if this is the user's own data row.
+        // The data row should be skipped.
+        // However, this would then not cover the case when a user is scheduling the meeting __for__ another user.
+        // We just offer all users with the capability as selectable and leave this aspect as possible improvement for the future.
+        // At least, Zoom does not care if the user who is the host adds himself as alternative host as well.
+        // Verify that the user really has a Zoom account.
+        // Furthermore, verify that the user's status is active.
+        // Adding a pending or inactive user as alternative host will result in a Zoom API error otherwise
         $zoomuser = zoom_get_user($u->email);
         if ($zoomuser !== false && $zoomuser->status === 'active') {
             // Add user to array of users.
