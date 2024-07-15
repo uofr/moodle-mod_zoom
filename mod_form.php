@@ -64,9 +64,9 @@ class mod_zoom_mod_form extends moodleform_mod {
         $isnew = empty($this->_cm);
 
         $service = new mod_zoom_webservice();
-        //UofR HACK ADDED
-        $zoomuser = zoom_email_alias($USER,$service);
-        //END of ADDED
+        // UofR HACK ADDED.
+        $zoomuser = zoom_email_alias($USER, $service);
+        // END of ADDED.
         $zoomuserid = zoom_get_user_id(false);
 
         // If creating a new instance, but the Zoom user does not exist.
@@ -85,14 +85,14 @@ class mod_zoom_mod_form extends moodleform_mod {
         $canschedule = false;
         if ($zoomuserid !== false) {
             // Get the array of users they can schedule.
-            //UOFR HACK
+            // UOFR HACK.
             $canschedule = zoom_webservice()->get_schedule_for_users($zoomuser->email);
         }
 
         if (!empty($canschedule)) {
             // Add the current user.
             $canschedule[$zoomuser->id] = new stdClass();
-            //UOFR HACK
+            // UOFR HACK.
             $canschedule[$zoomuser->id]->email = $zoomuser->email;
 
             // If the activity exists and the current user is not the current host.
@@ -175,38 +175,37 @@ class mod_zoom_mod_form extends moodleform_mod {
         // Adding the "general" fieldset, where all the common settings are showed.
         $mform->addElement('header', 'general', get_string('general', 'form'));
 
-        //Add an assign instructor field if user has the capbility to do so
+        // Add an assign instructor field if user has the capbility to do so.
         $context = context_course::instance($this->_course->id);
         if (has_capability('mod/zoom:assign', $context)) {
-
             $teacherarray = zoom_get_course_instructors($this->_course->id);
-            $teachersmenu = array($zoomuser->email => fullname($USER));
-            
+            $teachersmenu = [$zoomuser->email => fullname($USER)];
+
             foreach ($teacherarray as $teacher) {
-                if(strtolower($zoomuser->email) != strtolower($teacher->email)){
+                if (strtolower($zoomuser->email) != strtolower($teacher->email)) {
                     $teachersmenu[$teacher->email] = $teacher->name;
                 }
             }
             $select = $mform->addElement('select', 'assign', get_string('assign', 'zoom'), $teachersmenu);
-            //need to set current host here
-            if(!$isnew){
-
-                $zoomusers=[];
-                foreach($teacherarray as $teacher){
-                    //not amazing may have to reconsider if we end up hitting the timeout limit for zoom requests
+            // Need to set current host here.
+            if(!$isnew) {
+                $zoomusers = [];
+                foreach ($teacherarray as $teacher) {
+                    // Not amazing may have to reconsider if we end up hitting the timeout limit for zoom requests.
                     $zoomusers[] = zoom_webservice()->get_user($teacher->email);
                 }
-                foreach($zoomusers as $zoomuser){
-                    if($zoomuser->id == $this->current->host_id ){
+                foreach ($zoomusers as $zoomuser) {
+                    if ($zoomuser->id == $this->current->host_id ) {
                         $select->setSelected($zoomuser->email);
                     }
                 }
-            }else
+            } else {
                 $select->setSelected($zoomuser->email);
+            }
         }
 
         // Add topic (stored in database as 'name').
-        $mform->addElement('text', 'name', get_string('title', 'zoom'), array('size' => '64'));
+        $mform->addElement('text', 'name', get_string('title', 'zoom'), ['size' => '64']);
         $mform->setType('name', PARAM_TEXT);
         $mform->addRule('name', null, 'required', null, 'client');
         $mform->addRule('name', get_string('maximumchars', '', 200), 'maxlength', 200, 'client');
@@ -1204,22 +1203,23 @@ class mod_zoom_mod_form extends moodleform_mod {
             }
         }
 
-        //check capability 
-        //UOFR HACK ADDED
+        // Check capability.
+        // UOFR HACK ADDED.
         if (isset($data['assign'])) {
             $useremail = $data['assign'];
-            if($useremail != $USER->email){
+            if($useremail != $USER->email) {
                 $user = zoom_get_user_info($useremail);
-                if($user){
+                if ($user) {
                     $service = new mod_zoom_webservice();
-                    $zoomuser = zoom_email_alias($user,$service);
-                    if(!$zoomuser){
-                        $errors['assign'] = $useremail.get_string('err_account_invalid', 'mod_zoom');
+                    $zoomuser = zoom_email_alias($user, $service);
+                    if (!$zoomuser) {
+                        $errors['assign'] = $useremail . get_string('err_account_invalid', 'mod_zoom');
                     }
-                }else
-                    $errors['assign'] = $useremail.get_string('err_account_invalid', 'mod_zoom');
+                } else {
+                    $errors['assign'] = $useremail . get_string('err_account_invalid', 'mod_zoom');
+                }
             }
-        } //END of ADDED
+        } // END of ADDED.
         return $errors;
     }
 }
