@@ -788,21 +788,21 @@ class webservice {
      */
     public function upgrade_user($user) {
 
-        if($user->type == ZOOM_USER_TYPE_BASIC){
+        if ($user->type == ZOOM_USER_TYPE_BASIC) {
             // Checks whether we need to recycle licenses and acts accordingly.
             if ($this->recyclelicenses) {
                 if ($this->_paid_user_limit_reached()) {
                     $leastrecentlyactivepaiduserid = $this->_get_least_recently_active_paid_user_id();
                     // Changes least_recently_active_user to a basic user so we can use their license.
-                    try{
-                        $this->_make_call("users/$leastrecentlyactivepaiduserid", array('type' => ZOOM_USER_TYPE_BASIC), 'patch');
-                    }catch(moodle_exception $error) {
+                    try {
+                        $this->_make_call("users/$leastrecentlyactivepaiduserid", ['type' => ZOOM_USER_TYPE_BASIC], 'patch');
+                    } catch(moodle_exception $error) {
                         throw $error;
                     }
                 }
                 // Changes current user to pro so they can make a meeting.
                 try {
-                    $this->_make_call("users/$user->id", array('type' => ZOOM_USER_TYPE_PRO), 'patch');
+                    $this->_make_call("users/$user->id", ['type' => ZOOM_USER_TYPE_PRO], 'patch');
                 } catch (moodle_exception $error) {
                     // If the user already exists, the error will contain 'User does not exist'.
                     if (strpos($error->getMessage(), 'User does not exist') === true) {
@@ -812,10 +812,9 @@ class webservice {
                     }
                 }
                 return true;
-            }else{
-
+            } else {
                 try {
-                    $this->_make_call("users/$user->id", array('type' => ZOOM_USER_TYPE_PRO), 'patch');
+                    $this->_make_call("users/$user->id", ['type' => ZOOM_USER_TYPE_PRO], 'patch');
                 } catch (moodle_exception $error) {
                     // If the user already exists, the error will contain 'User does not exist'.
                     if (strpos($error->getMessage(), 'User does not exist') === true) {
@@ -826,7 +825,7 @@ class webservice {
                 }
                 return true;
             }
-        }else{
+        } else {
             return false;
         }
     }
