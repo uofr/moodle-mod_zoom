@@ -58,6 +58,7 @@ final class advanced_passcode_test extends basic_testcase {
      */
     public static function setUpBeforeClass(): void {
         global $CFG;
+        parent::setUpBeforeClass();
         require_once($CFG->dirroot . '/mod/zoom/locallib.php');
     }
 

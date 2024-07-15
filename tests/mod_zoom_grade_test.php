@@ -55,6 +55,7 @@ final class mod_zoom_grade_test extends advanced_testcase {
      */
     public static function setUpBeforeClass(): void {
         global $CFG;
+        parent::setUpBeforeClass();
         require_once($CFG->dirroot . '/mod/zoom/lib.php');
         require_once($CFG->dirroot . '/mod/zoom/locallib.php');
     }
@@ -63,6 +64,7 @@ final class mod_zoom_grade_test extends advanced_testcase {
      * Setup before every test.
      */
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
         $this->setAdminUser();
 

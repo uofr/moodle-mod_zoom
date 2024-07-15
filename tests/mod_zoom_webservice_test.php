@@ -41,6 +41,7 @@ final class mod_zoom_webservice_test extends advanced_testcase {
      */
     public static function setUpBeforeClass(): void {
         global $CFG;
+        parent::setUpBeforeClass();
         require_once($CFG->dirroot . '/mod/zoom/locallib.php');
     }
 
@@ -48,6 +49,7 @@ final class mod_zoom_webservice_test extends advanced_testcase {
      * Setup before every test.
      */
     public function setUp(): void {
+        parent::setUp();
         $this->resetAfterTest();
         // Set fake values so we can test methods in class.
         set_config('clientid', 'test', 'zoom');
