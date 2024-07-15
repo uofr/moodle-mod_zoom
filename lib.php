@@ -197,26 +197,26 @@ function zoom_update_instance(stdClass $zoom, ?mod_zoom_mod_form $mform = null) 
     $zoom->meeting_id = $updatedzoomrecord->meeting_id;
     $zoom->webinar = $updatedzoomrecord->webinar;
 
-    $changehost = FALSE;
+    $changehost = false;
 
     // Added for assign.
-    if(isset($zoom->assign)){
+    if (isset($zoom->assign)) {
         $newhost = zoom_webservice()->get_user($zoom->assign);
         // Check if hostid matches selected host.
-        if($zoom->host_id != $newhost->id){
-            $zoom->host_id= $newhost->id;
-            $changehost = TRUE;
+        if ($zoom->host_id != $newhost->id) {
+            $zoom->host_id = $newhost->id;
+            $changehost = true;
         }
     }
 
     // If the assigned host has been changed, we need to change the host id.
     // Since the zoom api does not allow the host id to be update we must then delete, and create a new meeting.
-    if($changehost){
+    if ($changehost) {
         // Delete current meeting.
         $oldid = $zoom->instance;
         // If the meeting is missing from zoom, don't bother with the webservice.
 
-        if (!$ogzoom = $DB->get_record('zoom', array('id' => $oldid))) {
+        if (!$ogzoom = $DB->get_record('zoom', ['id' => $oldid])) {
             return false;
         }
 
@@ -246,13 +246,13 @@ function zoom_update_instance(stdClass $zoom, ?mod_zoom_mod_form $mform = null) 
 
         return true;
 
-    }else{
+    } else {
         // The object received from mod_form.php returns instance instead of id for some reason.
         $zoom->id = $zoom->instance;
         $zoom->timemodified = time();
         $DB->update_record('zoom', $zoom);
 
-        $updatedzoomrecord = $DB->get_record('zoom', array('id' => $zoom->instance));
+        $updatedzoomrecord = $DB->get_record('zoom', ['id' => $zoom->instance]);
         $zoom->meeting_id = $updatedzoomrecord->meeting_id;
         $zoom->webinar = $updatedzoomrecord->webinar;
 
@@ -1038,14 +1038,16 @@ function zoom_update_alternative_host($teacheremails) {
     $count = count($teacheremails);
     $inputstring = "";
 
-    for($i = 0; $i < $count; $i++){
+    for ($i = 0; $i < $count; $i++) {
 
-        if($teacheremails[$i]!= "0" &&  $teacheremails[$i]!= ""){
+        if ($teacheremails[$i] != "0" &&  $teacheremails[$i] != "") {
 
-            if($i == $count-1)
+            if ($i == $count - 1) {
                 $inputstring .= $teacheremails[$i];
-            else
+            }
+            else {
                 $inputstring .= $teacheremails[$i].",";
+            }
         }
     }
     return $inputstring;
