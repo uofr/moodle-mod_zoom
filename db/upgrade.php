@@ -313,7 +313,6 @@ function xmldb_zoom_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2019061800, 'zoom');
     }
 
-
     if ($oldversion < 2020042600) {
         // Change field zoom_meeting_participants from type int(11) to char(35),
         // because sometimes zoomuserid is concatenated with a timestamp.
