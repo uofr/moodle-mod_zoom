@@ -783,8 +783,8 @@ class webservice {
      * Take a host_id of user and upgrade account from basic to pro
      * depending on if licenses are available
      *
-     * @param stdClass $zoom user object
-     * @return stdClass false or true if account was upgraded
+     * @param stdClass $user user object
+     * @return bool false or true if account was upgraded
      */
     public function upgrade_user($user) {
 

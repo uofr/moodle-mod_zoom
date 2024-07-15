@@ -572,10 +572,10 @@ function zoom_email_check($email) {
     }
 }
 
-/** ADDED
- * Check if user has any alias emails connected to account
- * @param stdClass $object
- * @param stdClass $service
+/**
+ * ADDED. Check if user has any alias emails connected to account.
+ * @param stdClass $user User object.
+ * @param stdClass $service Service object.
  */
 function zoom_email_alias($user, $service) {
 
