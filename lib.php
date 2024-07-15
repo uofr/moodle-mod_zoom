@@ -93,16 +93,15 @@ function zoom_add_instance(stdClass $zoom, ?mod_zoom_mod_form $mform = null) {
 
     $zoom->course = (int) $zoom->course;
 
-
-    //UOFR HACK Added for assign
-    if(isset($zoom->assign)){
+    // UOFR HACK Added for assign.
+    if (isset($zoom->assign)) {
         $newhost = zoom_webservice()->get_user($zoom->assign);
-        //check if hostid matches selected host
-        if($zoom->host_id != $newhost->id){
-            $zoom->host_id= $newhost->id;
+        // Check if hostid matches selected host.
+        if ($zoom->host_id != $newhost->id) {
+            $zoom->host_id = $newhost->id;
         }
     }
-    //End of Added
+    // End of Added.
 
     $zoom->breakoutrooms = [];
     if (!empty($zoom->rooms)) {
@@ -114,10 +113,12 @@ function zoom_add_instance(stdClass $zoom, ?mod_zoom_mod_form $mform = null) {
     $zoom = populate_zoom_from_response($zoom, $response);
     $zoom->timemodified = time();
     if (!empty($zoom->schedule_for)) {
-        // Wait until after receiving a successful response from zoom to update the host
-        // based on the schedule_for field. Zoom handles the schedule for on their
-        // end, but returns the host as the person who created the meeting, not the person
-        // that it was scheduled for.
+        /*
+        Wait until after receiving a successful response from zoom to update the host
+        based on the schedule_for field. Zoom handles the schedule for on their
+        end, but returns the host as the person who created the meeting, not the person
+        that it was scheduled for.
+        */
         $correcthostzoomuser = zoom_get_user($zoom->schedule_for);
         $zoom->host_id = $correcthostzoomuser->id;
     }
@@ -198,20 +199,20 @@ function zoom_update_instance(stdClass $zoom, ?mod_zoom_mod_form $mform = null) 
 
     $changehost = FALSE;
 
-    //Added for assign
+    // Added for assign.
     if(isset($zoom->assign)){
         $newhost = zoom_webservice()->get_user($zoom->assign);
-        //check if hostid matches selected host
+        // Check if hostid matches selected host.
         if($zoom->host_id != $newhost->id){
             $zoom->host_id= $newhost->id;
             $changehost = TRUE;
         }
     }
 
-    //if the assigned host has been changed, we need to change the host id
-    //since the zoom api does not allow the host id to be update we must then delete, and create a new meeting
+    // If the assigned host has been changed, we need to change the host id.
+    // Since the zoom api does not allow the host id to be update we must then delete, and create a new meeting.
     if($changehost){
-        //Delete current meeting
+        // Delete current meeting.
         $oldid = $zoom->instance;
         // If the meeting is missing from zoom, don't bother with the webservice.
 
@@ -234,7 +235,7 @@ function zoom_update_instance(stdClass $zoom, ?mod_zoom_mod_form $mform = null) 
 
         $zoom->id = $oldid;
         $zoom->timemodified = time();
-        //update db with new meeting info
+        // Update db with new meeting info.
         $DB->update_record('zoom', $zoom);
 
         // Update tracking field data for meeting.
@@ -1035,9 +1036,9 @@ function zoom_pluginfile($course, $cm, $context, $filearea, array $args, $forced
 function zoom_update_alternative_host($teacheremails) {
 
     $count = count($teacheremails);
-    $inputstring ="";
+    $inputstring = "";
 
-    for($i=0; $i<$count; $i++){
+    for($i = 0; $i < $count; $i++){
 
         if($teacheremails[$i]!= "0" &&  $teacheremails[$i]!= ""){
 
