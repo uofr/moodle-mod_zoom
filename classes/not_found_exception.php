@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of the Zoom plugin for Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -15,27 +15,25 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Search area for mod_zoom activities.
+ * Exception class for Zoom API errors.
  *
- * @package    mod_zoom
- * @copyright  2019 UC Regents
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package   mod_zoom
+ * @copyright 2023 Jonathan Champ <jrchamp@ncsu.edu>
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace mod_zoom\search;
-
-use core_search\base_activity;
+namespace mod_zoom;
 
 /**
- * Search area for mod_zoom activities.
+ * Entry not found on Zoom.
  */
-class activity extends base_activity {
+class not_found_exception extends webservice_exception {
     /**
-     * Returns true if this area uses file indexing.
-     *
-     * @return bool
+     * Constructor
+     * @param string $response      Web service response message
+     * @param int $errorcode     Web service response error code
      */
-    public function uses_file_indexing() {
-        return true;
+    public function __construct($response, $errorcode) {
+        parent::__construct($response, $errorcode, 'errorwebservice_notfound', 'mod_zoom');
     }
 }

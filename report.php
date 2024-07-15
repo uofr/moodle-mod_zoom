@@ -21,6 +21,7 @@
  * @copyright  2015 UC Regents
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 require(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 require_once(__DIR__ . '/locallib.php');
@@ -29,7 +30,7 @@ require_once($CFG->libdir . '/moodlelib.php');
 
 require_login();
 // Additional access checks in zoom_get_instance_setup().
-list($course, $cm, $zoom) = zoom_get_instance_setup();
+[$course, $cm, $zoom] = zoom_get_instance_setup();
 
 // Check capability.
 $context = context_module::instance($cm->id);

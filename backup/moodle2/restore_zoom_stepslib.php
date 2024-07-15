@@ -23,14 +23,19 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+namespace mod_zoom;
+
 defined('MOODLE_INTERNAL') || die();
 
 require_once($CFG->dirroot . '/mod/zoom/locallib.php');
 
+use moodle_exception;
+use restore_path_element;
+
 /**
  * Structure step to restore one zoom activity
  */
-class restore_zoom_activity_structure_step extends restore_activity_structure_step {
+class restore_activity_structure_step extends \restore_activity_structure_step {
     /**
      * Defines structure of path elements to be processed during the restore
      *
@@ -53,7 +58,7 @@ class restore_zoom_activity_structure_step extends restore_activity_structure_st
     protected function process_zoom($data) {
         global $DB;
 
-        $data = (object)$data;
+        $data = (object) $data;
 
         // Update start_time before attempting to create a new meeting.
         $data->start_time = $this->apply_date_offset($data->start_time);
@@ -64,7 +69,6 @@ class restore_zoom_activity_structure_step extends restore_activity_structure_st
             $data = populate_zoom_from_response($data, $updateddata);
             $data->exists_on_zoom = ZOOM_MEETING_EXISTS;
         } catch (moodle_exception $e) {
-            $data->start_url = '';
             $data->join_url = '';
             $data->meeting_id = 0;
             $data->exists_on_zoom = ZOOM_MEETING_EXPIRED;

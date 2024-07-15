@@ -59,16 +59,23 @@ function xmldb_zoom_upgrade($oldversion) {
 
     if ($oldversion < 2015071500) {
         // Rename option_no_video_host to option_host_video; change default to 1; invert values.
-        $field = new xmldb_field('option_no_video_host', XMLDB_TYPE_INTEGER, '1', null, null, null,
-                '1', 'option_start_type');
+        $field = new xmldb_field('option_no_video_host', XMLDB_TYPE_INTEGER, '1', null, null, null, '1', 'option_start_type');
         // Invert option_no_video_host.
         $DB->set_field('UPDATE {zoom} SET option_no_video_host = 1 - option_no_video_host');
         $dbman->change_field_default($table, $field);
         $dbman->rename_field($table, $field, 'option_host_video');
 
         // Rename option_no_video_participants to option_participants_video; change default to 1; invert values.
-        $field = new xmldb_field('option_no_video_participants', XMLDB_TYPE_INTEGER, '1', null, null, null,
-                '1', 'option_host_video');
+        $field = new xmldb_field(
+            'option_no_video_participants',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            null,
+            null,
+            '1',
+            'option_host_video'
+        );
         // Invert option_no_video_participants.
         $DB->set_field('UPDATE {zoom} SET option_no_video_participants = 1 - option_no_video_participants');
         $dbman->change_field_default($table, $field);
@@ -323,14 +330,11 @@ function xmldb_zoom_upgrade($oldversion) {
         $table = new xmldb_table('zoom_meeting_participants');
 
         // First drop key, not needed anymore.
-        $key = new xmldb_key('user_by_meeting_key', XMLDB_KEY_UNIQUE,
-                ['detailsid', 'zoomuserid']);
+        $key = new xmldb_key('user_by_meeting_key', XMLDB_KEY_UNIQUE, ['detailsid', 'zoomuserid']);
         $dbman->drop_key($table, $key);
 
         // Change of type for field zoomuserid to char(35).
-        $field = new xmldb_field('zoomuserid', XMLDB_TYPE_CHAR,
-                '35', null, XMLDB_NOTNULL,
-                null, null, 'userid');
+        $field = new xmldb_field('zoomuserid', XMLDB_TYPE_CHAR, '35', null, XMLDB_NOTNULL, null, null, 'userid');
         $dbman->change_field_type($table, $field);
 
         // Zoom savepoint reached.
@@ -372,8 +376,16 @@ function xmldb_zoom_upgrade($oldversion) {
 
         // Define field authenticated_users to be added to zoom.
         $table = new xmldb_table('zoom');
-        $field = new xmldb_field('option_authenticated_users', XMLDB_TYPE_INTEGER,
-                '1', null, null, null, '0', 'option_waiting_room');
+        $field = new xmldb_field(
+            'option_authenticated_users',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            null,
+            null,
+            '0',
+            'option_waiting_room'
+        );
 
         // Conditionally launch add field authenticated_users.
         if (!$dbman->field_exists($table, $field)) {
@@ -466,8 +478,16 @@ function xmldb_zoom_upgrade($oldversion) {
     if ($oldversion < 2021012902) {
         // Define field option_encryption_type to be added to zoom.
         $table = new xmldb_table('zoom');
-        $field = new xmldb_field('option_encryption_type', XMLDB_TYPE_CHAR, '20', null, null, null, 'enhanced_encryption',
-                'option_authenticated_users');
+        $field = new xmldb_field(
+            'option_encryption_type',
+            XMLDB_TYPE_CHAR,
+            '20',
+            null,
+            null,
+            null,
+            'enhanced_encryption',
+            'option_authenticated_users'
+        );
 
         // Conditionally launch add field option_encryption_type.
         if (!$dbman->field_exists($table, $field)) {
@@ -686,8 +706,16 @@ function xmldb_zoom_upgrade($oldversion) {
         // Add new field for recordings_visible_default.
         $table = new xmldb_table('zoom');
         // Define field recordings_visible_default to be added to zoom.
-        $field = new xmldb_field('recordings_visible_default', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1',
-                'alternative_hosts');
+        $field = new xmldb_field(
+            'recordings_visible_default',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '1',
+            'alternative_hosts'
+        );
 
         // Conditionally launch add field recordings_visible_default.
         if (!$dbman->field_exists($table, $field)) {
@@ -718,8 +746,16 @@ function xmldb_zoom_upgrade($oldversion) {
     if ($oldversion < 2022022400) {
         // Change the recordings_visible_default field in the zoom table.
         $table = new xmldb_table('zoom');
-        $field = new xmldb_field('recordings_visible_default', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1',
-                'alternative_hosts');
+        $field = new xmldb_field(
+            'recordings_visible_default',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '1',
+            'alternative_hosts'
+        );
         $dbman->change_field_default($table, $field);
 
         // Change the showrecording field in the zoom table.
@@ -735,8 +771,16 @@ function xmldb_zoom_upgrade($oldversion) {
         $table = new xmldb_table('zoom');
 
         // Define and conditionally add field show_schedule.
-        $field = new xmldb_field('show_schedule', XMLDB_TYPE_INTEGER, '1',
-            null, XMLDB_NOTNULL, null, '1', 'recordings_visible_default');
+        $field = new xmldb_field(
+            'show_schedule',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '1',
+            'recordings_visible_default'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
@@ -802,8 +846,7 @@ function xmldb_zoom_upgrade($oldversion) {
 
         // Adding keys to table zoom_rooms_groups.
         $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
-        $table->add_key('fk_breakoutroomid', XMLDB_KEY_FOREIGN, ['breakoutroomid'],
-            'zoom_meeting_breakout_rooms', ['id']);
+        $table->add_key('fk_breakoutroomid', XMLDB_KEY_FOREIGN, ['breakoutroomid'], 'zoom_meeting_breakout_rooms', ['id']);
 
         // Conditionally launch create table for customfield_category.
         if (!$dbman->table_exists($table)) {
@@ -831,7 +874,7 @@ function xmldb_zoom_upgrade($oldversion) {
         $table = new xmldb_table('zoom');
 
         // Define and conditionally add field registration.
-        $field = new xmldb_field('registration', XMLDB_TYPE_INTEGER, '1', null, null, null, null, 'option_auto_recording');
+        $field = new xmldb_field('registration', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '2', 'option_auto_recording');
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
@@ -847,8 +890,16 @@ function xmldb_zoom_upgrade($oldversion) {
         $table = new xmldb_table('zoom');
 
         // Launch change of nullability for show schedule.
-        $field = new xmldb_field('show_schedule', XMLDB_TYPE_INTEGER, '1',
-            null, XMLDB_NOTNULL, null, '1', 'recordings_visible_default');
+        $field = new xmldb_field(
+            'show_schedule',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '1',
+            'recordings_visible_default'
+        );
         $dbman->change_field_notnull($table, $field);
 
         $field = new xmldb_field('show_security', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1', 'show_schedule');
@@ -862,6 +913,68 @@ function xmldb_zoom_upgrade($oldversion) {
 
         // Zoom savepoint reached.
         upgrade_mod_savepoint(true, 2023080202, 'zoom');
+    }
+
+    if ($oldversion < 2023111600) {
+        // Issue #326: Drop start_url from database.
+
+        // Start zoom table modifications.
+        $table = new xmldb_table('zoom');
+
+        // Define field status to be dropped from zoom.
+        $field = new xmldb_field('start_url');
+
+        // Conditionally launch drop field status.
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        // Zoom savepoint reached.
+        upgrade_mod_savepoint(true, 2023111600, 'zoom');
+    }
+
+    if ($oldversion < 2024012500) {
+        // Version 5.1.0 incorrectly upgraded the zoom table's registration field. It should not be null and should default to 2.
+        $table = new xmldb_table('zoom');
+        $field = new xmldb_field('registration', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '2', 'option_auto_recording');
+
+        // Set any null values to the new default: 2.
+        $DB->set_field_select('zoom', 'registration', '2', 'registration IS NULL');
+
+        // Launch change of nullability for field registration.
+        $dbman->change_field_notnull($table, $field);
+
+        // Launch change of default for field registration.
+        $dbman->change_field_default($table, $field);
+
+        // Zoom savepoint reached.
+        upgrade_mod_savepoint(true, 2024012500, 'zoom');
+    }
+
+    if ($oldversion < 2024030100) {
+        // Define field grading_method to be added to zoom.
+        $table = new xmldb_table('zoom');
+        $field = new xmldb_field('grading_method', XMLDB_TYPE_CHAR, '10', null, null, null, null, 'grade');
+
+        // Conditionally launch add field grading_method.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Zoom savepoint reached.
+        upgrade_mod_savepoint(true, 2024030100, 'zoom');
+    }
+
+    if ($oldversion < 2024041900) {
+        // Update existing recording names to default for translatable recordingtype strings.
+        $meetings = $DB->get_records('zoom');
+
+        foreach ($meetings as $meeting) {
+            $DB->set_field_select('zoom_meeting_recordings', 'name', $meeting->name, 'zoomid = ?', [$meeting->id]);
+        }
+
+        // Zoom savepoint reached.
+        upgrade_mod_savepoint(true, 2024041900, 'zoom');
     }
 
     return true;

@@ -21,6 +21,7 @@
  * @copyright  2015 UC Regents
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 require(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 require_once(__DIR__ . '/locallib.php');
@@ -29,7 +30,7 @@ require_once($CFG->libdir . '/moodlelib.php');
 
 require_login();
 // Additional access checks in zoom_get_instance_setup().
-list($course, $cm, $zoom) = zoom_get_instance_setup();
+[$course, $cm, $zoom] = zoom_get_instance_setup();
 
 global $DB;
 
@@ -70,8 +71,7 @@ if (empty($export) || empty($participants)) {
 
     // Stop if there is no data.
     if (empty($participants)) {
-        notice(get_string('noparticipants', 'mod_zoom'),
-                new moodle_url('/mod/zoom/report.php', ['id' => $cm->id]));
+        notice(get_string('noparticipants', 'mod_zoom'), new moodle_url('/mod/zoom/report.php', ['id' => $cm->id]));
         echo $OUTPUT->footer();
         exit();
     }
@@ -167,7 +167,11 @@ if ($export != 'xls') {
         'export' => 'xls',
     ]);
     $xlsstring = get_string('application/vnd.ms-excel', 'mimetypes');
-    $xlsicon = html_writer::img($OUTPUT->image_url('f/spreadsheet'), $xlsstring, ['title' => $xlsstring]);
+    $xlsicon = html_writer::img(
+        $OUTPUT->image_url('f/spreadsheet'),
+        $xlsstring,
+        ['title' => $xlsstring, 'class' => 'mimetypeicon']
+    );
     echo get_string('export', 'mod_zoom') . ': ' . html_writer::link($exporturl, $xlsicon);
 
     echo $OUTPUT->footer();

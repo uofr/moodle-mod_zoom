@@ -30,6 +30,10 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/mod/zoom/lib.php');
 require_once($CFG->dirroot . '/mod/zoom/classes/webservice_exception.php');
+require_once($CFG->dirroot . '/mod/zoom/classes/api_limit_exception.php');
+require_once($CFG->dirroot . '/mod/zoom/classes/bad_request_exception.php');
+require_once($CFG->dirroot . '/mod/zoom/classes/not_found_exception.php');
+require_once($CFG->dirroot . '/mod/zoom/classes/retry_failed_exception.php');
 require_once($CFG->dirroot . '/mod/zoom/classes/webservice.php');
 
 // Constants.
@@ -111,77 +115,6 @@ define('ZOOM_AUTORECORDING_CLOUD', 'cloud');
 define('ZOOM_REGISTRATION_AUTOMATIC', 0);
 define('ZOOM_REGISTRATION_MANUAL', 1);
 define('ZOOM_REGISTRATION_OFF', 2);
-
-/**
- * Entry not found on Zoom.
- */
-class zoom_not_found_exception extends \mod_zoom\webservice_exception {
-    /**
-     * Constructor
-     * @param string $response      Web service response message
-     * @param int $errorcode     Web service response error code
-     */
-    public function __construct($response, $errorcode) {
-        parent::__construct($response, $errorcode, 'errorwebservice_notfound', 'mod_zoom');
-    }
-}
-
-/**
- * Bad request received by Zoom.
- */
-class zoom_bad_request_exception extends \mod_zoom\webservice_exception {
-    /**
-     * Constructor
-     * @param string $response      Web service response message
-     * @param int $errorcode     Web service response error code
-     */
-    public function __construct($response, $errorcode) {
-        parent::__construct($response, $errorcode, 'errorwebservice_badrequest', 'mod_zoom', '', $response);
-    }
-}
-
-/**
- * Couldn't succeed within the allowed number of retries.
- */
-class zoom_api_retry_failed_exception extends \mod_zoom\webservice_exception {
-    /**
-     * Constructor
-     * @param string $response      Web service response
-     * @param int $errorcode     Web service response error code
-     */
-    public function __construct($response, $errorcode) {
-        $a = new stdClass();
-        $a->response = $response;
-        $a->maxretries = mod_zoom_webservice::MAX_RETRIES;
-        parent::__construct($response, $errorcode, 'zoomerr_maxretries', 'mod_zoom', '', $a);
-    }
-}
-
-/**
- * Exceeded daily API limit.
- */
-class zoom_api_limit_exception extends \mod_zoom\webservice_exception {
-    /**
-     * Unix timestamp of next time to API can be called.
-     * @var int
-     */
-    public $retryafter = null;
-
-    /**
-     * Constructor
-     * @param string $response  Web service response
-     * @param int $errorcode    Web service response error code
-     * @param int $retryafter   Unix timestamp of next time to API can be called.
-     */
-    public function __construct($response, $errorcode, $retryafter) {
-        $this->retryafter = $retryafter;
-
-        $a = new stdClass();
-        $a->response = $response;
-        parent::__construct($response, $errorcode, 'zoomerr_apilimit', 'mod_zoom', '',
-                userdate($retryafter, get_string('strftimedaydatetime', 'core_langconfig')));
-    }
-}
 
 /**
  * Terminate the current script with a fatal error.
@@ -293,7 +226,8 @@ function zoom_get_sessions_for_display($zoomid) {
     $sessions = [];
     $format = get_string('strftimedatetimeshort', 'langconfig');
 
-    $instances = $DB->get_records('zoom_meeting_details', ['zoomid' => $zoomid]);
+    // Sort sessions in start_time ascending order.
+    $instances = $DB->get_records('zoom_meeting_details', ['zoomid' => $zoomid], 'start_time');
 
     foreach ($instances as $instance) {
         // The meeting uuid, not the participant's uuid.
@@ -579,7 +513,7 @@ function zoom_get_course_instructors($courseid) {
 
             $sql = 'SELECT * FROM {user_info_field} uif WHERE shortname = "zoomemail" ';
             $uafield = $DB->get_record_sql($sql, [], IGNORE_MISSING);
-        
+
             $teacherarray->email = $teacher->email;
 
             if($uafield){
@@ -588,11 +522,11 @@ function zoom_get_course_instructors($courseid) {
                 if($uainfo && $uainfo->data!=""){
                     $teacherarray->email = $uainfo->data;
                 }
-            } 
+            }
             $teacherarray->name = fullname($teacher);
             $teachersmenu[] = $teacherarray;
         }
-    } 
+    }
 
     return $teachersmenu;
 }
@@ -610,7 +544,7 @@ function zoom_get_user_role($id){
     global $DB;
 
     $rolestr = array();
-   
+
     $roleassignments = $DB->get_records_sql("
       SELECT ra.roleid
       FROM {role_assignments} ra
@@ -634,7 +568,7 @@ function zoom_get_user_role($id){
 function zoom_email_check($email){
 
     $split = explode('@',$email);
-    
+
     if(ZOOM_USER_DOMAIN == $split[1])
         return true;
     else
@@ -653,7 +587,7 @@ function zoom_email_alias($user,$service){
     //check alternative email first
     $sql = 'SELECT * FROM {user_info_field} uif WHERE shortname = "zoomemail" ';
     $uafield = $DB->get_record_sql($sql, [], IGNORE_MISSING);
-    
+
     if($uafield){
         $sql = 'SELECT * FROM {user_info_data} uif WHERE fieldid = "'.$uafield->id.'" AND userid = '.$user->id;
         $uainfo = $DB->get_record_sql($sql, [], IGNORE_MISSING);
@@ -662,7 +596,7 @@ function zoom_email_alias($user,$service){
                 $zoomuser = $service->get_user($uainfo->data);
                 return $zoomuser;
             }
-        }     
+        }
     }
     $zoomuser = $service->get_user($user->email);
     return $zoomuser;
@@ -731,10 +665,12 @@ function zoom_create_passcode_description($meetingpasswordrequirement) {
         $description .= get_string('password_length', 'mod_zoom', $meetingpasswordrequirement->length) . ' ';
     }
 
-    if ($meetingpasswordrequirement->consecutive_characters_length &&
-        $meetingpasswordrequirement->consecutive_characters_length > 0) {
-        $description .= get_string('password_consecutive', 'mod_zoom',
-            $meetingpasswordrequirement->consecutive_characters_length - 1) . ' ';
+    if ($meetingpasswordrequirement->consecutive_characters_length > 0) {
+        $description .= get_string(
+            'password_consecutive',
+            'mod_zoom',
+            $meetingpasswordrequirement->consecutive_characters_length - 1
+        ) . ' ';
     }
 
     $description .= get_string('password_max_length', 'mod_zoom');
@@ -805,7 +741,7 @@ function zoom_get_users_from_alternativehosts(array $alternativehosts) {
     global $DB;
 
     // Get the existing Moodle user objects from the DB.
-    list($insql, $inparams) = $DB->get_in_or_equal($alternativehosts);
+    [$insql, $inparams] = $DB->get_in_or_equal($alternativehosts);
     $sql = 'SELECT *
             FROM {user}
             WHERE email ' . $insql . '
@@ -827,7 +763,7 @@ function zoom_get_nonusers_from_alternativehosts(array $alternativehosts) {
 
     // Get the non-Moodle user mail addresses by checking which one does not exist in the DB.
     $alternativehostnonusers = [];
-    list($insql, $inparams) = $DB->get_in_or_equal($alternativehosts);
+    [$insql, $inparams] = $DB->get_in_or_equal($alternativehosts);
     $sql = 'SELECT email
             FROM {user}
             WHERE email ' . $insql . '
@@ -867,7 +803,7 @@ function zoom_get_unavailability_note($zoom, $finished = null) {
     } else {
         // If we don't have the finished information yet, get it with a small overhead.
         if ($finished === null) {
-            list($inprogress, $available, $finished) = zoom_get_state($zoom);
+            [$inprogress, $available, $finished] = zoom_get_state($zoom);
         }
 
         // If this meeting is still pending.
@@ -1109,7 +1045,7 @@ function zoom_load_meeting($id, $context, $usestarturl = true) {
 
     $returns = ['nexturl' => null, 'error' => null];
 
-    list($inprogress, $available, $finished) = zoom_get_state($zoom);
+    [$inprogress, $available, $finished] = zoom_get_state($zoom);
 
     $userisregistered = false;
     $userisregistering = false;
@@ -1146,7 +1082,28 @@ function zoom_load_meeting($id, $context, $usestarturl = true) {
             $url = $registrantjoinurl;
         }
 
-        $returns['nexturl'] = new moodle_url($url, ['uname' => fullname($USER)]);
+        $unamesetting = get_config('zoom', 'unamedisplay');
+        switch ($unamesetting) {
+            case 'fullname':
+            default:
+                $unamedisplay = fullname($USER);
+                break;
+
+            case 'firstname':
+                $unamedisplay = $USER->firstname;
+                break;
+
+            case 'idfullname':
+                $unamedisplay = '(' . $USER->id . ') ' . fullname($USER);
+                break;
+
+            case 'id':
+                $unamedisplay = '(' . $USER->id . ')';
+                break;
+        }
+
+        // Try to send the user email (not guaranteed).
+        $returns['nexturl'] = new moodle_url($url, ['uname' => $unamedisplay, 'uemail' => $USER->email]);
     }
 
     // If the user is pre-registering, skip grading/completion.
@@ -1169,23 +1126,34 @@ function zoom_load_meeting($id, $context, $usestarturl = true) {
     $completion = new completion_info($course);
     $completion->set_module_viewed($cm);
 
-    // Check whether user has a grade. If not, then assign full credit to them.
-    $gradelist = grade_get_grades($course->id, 'mod', 'zoom', $cm->instance, $USER->id);
-
-    // Assign full credits for user who has no grade yet, if this meeting is gradable (i.e. the grade type is not "None").
-    if (!empty($gradelist->items) && empty($gradelist->items[0]->grades[$USER->id]->grade)) {
-        $grademax = $gradelist->items[0]->grademax;
-        $grades = [
-            'rawgrade' => $grademax,
-            'userid' => $USER->id,
-            'usermodified' => $USER->id,
-            'dategraded' => '',
-            'feedbackformat' => '',
-            'feedback' => '',
-        ];
-
-        zoom_grade_item_update($zoom, $grades);
+    // Check the grading method settings.
+    if (!empty($zoom->grading_method)) {
+        $gradingmethod = $zoom->grading_method;
+    } else if ($defaultgrading = get_config('gradingmethod', 'zoom')) {
+        $gradingmethod = $defaultgrading;
+    } else {
+        $gradingmethod = 'entry';
     }
+
+    if ($gradingmethod === 'entry') {
+        // Check whether user has a grade. If not, then assign full credit to them.
+        $gradelist = grade_get_grades($course->id, 'mod', 'zoom', $cm->instance, $USER->id);
+
+        // Assign full credits for user who has no grade yet, if this meeting is gradable (i.e. the grade type is not "None").
+        if (!empty($gradelist->items) && empty($gradelist->items[0]->grades[$USER->id]->grade)) {
+            $grademax = $gradelist->items[0]->grademax;
+            $grades = [
+                'rawgrade' => $grademax,
+                'userid' => $USER->id,
+                'usermodified' => $USER->id,
+                'dategraded' => '',
+                'feedbackformat' => '',
+                'feedback' => '',
+            ];
+
+            zoom_grade_item_update($zoom, $grades);
+        }
+    } // Otherwise, the get_meetings_report task calculates the grades according to duration.
 
     // Upgrade host upon joining meeting, if host is not Licensed.
     if ($userishost) {
@@ -1368,13 +1336,13 @@ function zoom_get_meeting_recordings_grouped($zoomid = null) {
 /**
  * Singleton for Zoom webservice class.
  *
- * @return \mod_zoom_webservice
+ * @return \mod_zoom\webservice
  */
 function zoom_webservice() {
     static $service;
 
     if (empty($service)) {
-        $service = new mod_zoom_webservice();
+        $service = new \mod_zoom\webservice();
     }
 
     return $service;
@@ -1469,20 +1437,46 @@ function zoom_get_user_info($email){
 
     $user = $DB->get_record('user', array('email' => $email), '*', IGNORE_MISSING);
     $emailchk = explode('@',$email);
-	
+
 	if (!$user) {
         //check if it is the alternate zoom email
         $sql = 'SELECT * FROM {user_info_field} uif WHERE shortname = "zoomemail" ';
         $uafield = $DB->get_record_sql($sql, [], IGNORE_MISSING);
-        
+
         if($uafield){
             $sql = 'SELECT * FROM {user_info_data} uif WHERE fieldid = "'.$uafield->id.'" AND data = "'.$email.'"';
             $uainfo = $DB->get_record_sql($sql, [], IGNORE_MISSING);
 
             if($uainfo){
                 $user = $DB->get_record('user', array('id' => $uainfo->userid), '*', IGNORE_MISSING);
-            }     
+            }
         }
 	}
     return $user;
 }//END OF ADDED
+
+/**
+ * Get the display name for a Zoom user.
+ * This is wrapped in a function to avoid unnecessary API calls.
+ *
+ * @param string $zoomuserid Zoom user ID.
+ * @return ?string
+ */
+function zoom_get_user_display_name($zoomuserid) {
+    try {
+        $hostuser = zoom_get_user($zoomuserid);
+
+        // Compose Moodle user object for host.
+        $hostmoodleuser = new stdClass();
+        $hostmoodleuser->firstname = $hostuser->first_name;
+        $hostmoodleuser->lastname = $hostuser->last_name;
+        $hostmoodleuser->alternatename = '';
+        $hostmoodleuser->firstnamephonetic = '';
+        $hostmoodleuser->lastnamephonetic = '';
+        $hostmoodleuser->middlename = '';
+
+        return fullname($hostmoodleuser);
+    } catch (moodle_exception $error) {
+        return null;
+    }
+}

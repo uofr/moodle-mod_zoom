@@ -15,27 +15,15 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Search area for mod_zoom activities.
+ * Defines message providers for mod_zoom.
  *
  * @package    mod_zoom
- * @copyright  2019 UC Regents
+ * @copyright  2023 Mo Farouk <phun.for.physics@gmail.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace mod_zoom\search;
+defined('MOODLE_INTERNAL') || die();
 
-use core_search\base_activity;
-
-/**
- * Search area for mod_zoom activities.
- */
-class activity extends base_activity {
-    /**
-     * Returns true if this area uses file indexing.
-     *
-     * @return bool
-     */
-    public function uses_file_indexing() {
-        return true;
-    }
-}
+$messageproviders = [
+    'teacher_notification' => [],
+];

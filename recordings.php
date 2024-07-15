@@ -27,7 +27,7 @@ require(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/lib.php');
 require_once(__DIR__ . '/locallib.php');
 
-list($course, $cm, $zoom) = zoom_get_instance_setup();
+[$course, $cm, $zoom] = zoom_get_instance_setup();
 
 require_login($course, true, $cm);
 
@@ -60,14 +60,14 @@ if ($iszoommanager) {
         get_string('recordingdate', 'mod_zoom'),
         get_string('recordinglink', 'mod_zoom'),
         get_string('recordingpasscode', 'mod_zoom'),
-        get_string('recordingshowtoggle', 'mod_zoom')
+        get_string('recordingshowtoggle', 'mod_zoom'),
     ];
 } else {
     $table->align = ['left', 'left', 'left'];
     $table->head = [
         get_string('recordingdate', 'mod_zoom'),
         get_string('recordinglink', 'mod_zoom'),
-        get_string('recordingpasscode', 'mod_zoom')
+        get_string('recordingpasscode', 'mod_zoom'),
     ];
 }
 
@@ -122,9 +122,10 @@ if (empty($recordings)) {
                     $recordingshowhtml = html_writer::div($recordingshowbuttonhtml);
                 }
 
+                $recordingname = trim($recording->name) . ' (' . zoom_get_recording_type_string($recording->recordingtype) . ')';
                 $params = ['id' => $cm->id, 'recordingid' => $recording->id];
                 $recordingurl = new moodle_url('/mod/zoom/loadrecording.php', $params);
-                $recordinglink = html_writer::link($recordingurl, $recording->name);
+                $recordinglink = html_writer::link($recordingurl, $recordingname);
                 $recordinglinkhtml = html_writer::span($recordinglink, 'recording-link', ['style' => 'margin-right:1rem']);
                 $recordinghtml .= html_writer::div($recordinglinkhtml, 'recording', ['style' => 'margin-bottom:.5rem']);
             }
@@ -133,6 +134,44 @@ if (empty($recordings)) {
         // Output only one row per grouping.
         $table->data[] = [$recordingdate, $recordinghtml, $recordingpasscode, $recordingshowhtml];
     }
+}
+
+/**
+ * Get the display name for a Zoom recording type.
+ *
+ * @package mod_zoom
+ * @param string $recordingtype Zoom recording type.
+ * @return string
+ */
+function zoom_get_recording_type_string($recordingtype) {
+    $recordingtypestringmap = [
+        'active_speaker' => 'recordingtype_active_speaker',
+        'audio_interpretation' => 'recordingtype_audio_interpretation',
+        'audio_only' => 'recordingtype_audio_only',
+        'audio_transcript' => 'recordingtype_audio_transcript',
+        'chat_file' => 'recordingtype_chat',
+        'closed_caption' => 'recordingtype_closed_caption',
+        'gallery_view' => 'recordingtype_gallery',
+        'poll' => 'recordingtype_poll',
+        'production_studio' => 'recordingtype_production_studio',
+        'shared_screen' => 'recordingtype_shared',
+        'shared_screen_with_gallery_view' => 'recordingtype_shared_gallery',
+        'shared_screen_with_speaker_view' => 'recordingtype_shared_speaker',
+        'shared_screen_with_speaker_view(CC)' => 'recordingtype_shared_speaker_cc',
+        'sign_interpretation' => 'recordingtype_sign',
+        'speaker_view' => 'recordingtype_speaker',
+        'summary' => 'recordingtype_summary',
+        'summary_next_steps' => 'recordingtype_summary_next_steps',
+        'summary_smart_chapters' => 'recordingtype_summary_smart_chapters',
+        'timeline' => 'recordingtype_timeline',
+    ];
+
+    // Return some default string in case new recordingtype values are added in the future.
+    if (empty($recordingtypestringmap[$recordingtype])) {
+        return $recordingtype;
+    }
+
+    return get_string($recordingtypestringmap[$recordingtype], 'mod_zoom');
 }
 
 echo html_writer::table($table);

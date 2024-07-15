@@ -64,10 +64,10 @@ function zoom_supports($feature) {
  * will create a new instance and return the id number of the new instance.
  *
  * @param stdClass $zoom Submitted data from the form in mod_form.php
- * @param mod_zoom_mod_form $mform The form instance (included because the function is used as a callback)
+ * @param mod_zoom_mod_form|null $mform The form instance (included because the function is used as a callback)
  * @return int The id of the newly inserted zoom record
  */
-function zoom_add_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
+function zoom_add_instance(stdClass $zoom, ?mod_zoom_mod_form $mform = null) {
     global $CFG, $DB;
     require_once($CFG->dirroot . '/mod/zoom/locallib.php');
 
@@ -92,9 +92,9 @@ function zoom_add_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
     }
 
     $zoom->course = (int) $zoom->course;
-    
-    
-    //UOFR HACK Added for assign 
+
+
+    //UOFR HACK Added for assign
     if(isset($zoom->assign)){
         $newhost = zoom_webservice()->get_user($zoom->assign);
         //check if hostid matches selected host
@@ -154,10 +154,10 @@ function zoom_add_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
  * will update an existing instance with new data.
  *
  * @param stdClass $zoom An object from the form in mod_form.php
- * @param mod_zoom_mod_form $mform The form instance (included because the function is used as a callback)
+ * @param mod_zoom_mod_form|null $mform The form instance (included because the function is used as a callback)
  * @return boolean Success/Failure
  */
-function zoom_update_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
+function zoom_update_instance(stdClass $zoom, ?mod_zoom_mod_form $mform = null) {
     global $CFG, $DB;
     require_once($CFG->dirroot . '/mod/zoom/locallib.php');
 
@@ -195,7 +195,7 @@ function zoom_update_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
     $updatedzoomrecord = $DB->get_record('zoom', ['id' => $zoom->id]);
     $zoom->meeting_id = $updatedzoomrecord->meeting_id;
     $zoom->webinar = $updatedzoomrecord->webinar;
-    
+
     $changehost = FALSE;
 
     //Added for assign
@@ -207,18 +207,18 @@ function zoom_update_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
             $changehost = TRUE;
         }
     }
-    
+
     //if the assigned host has been changed, we need to change the host id
     //since the zoom api does not allow the host id to be update we must then delete, and create a new meeting
     if($changehost){
         //Delete current meeting
         $oldid = $zoom->instance;
         // If the meeting is missing from zoom, don't bother with the webservice.
-        
+
         if (!$ogzoom = $DB->get_record('zoom', array('id' => $oldid))) {
             return false;
         }
-        
+
         if ($ogzoom->exists_on_zoom) {
             try {
                 zoom_webservice()->delete_meeting($ogzoom->meeting_id, $ogzoom->webinar);
@@ -231,30 +231,30 @@ function zoom_update_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
         // Get the updated meeting info from zoom, before updating calendar events.
         $response = zoom_webservice()->create_meeting($zoom);
         $zoom = populate_zoom_from_response($zoom, $response);
-        
+
         $zoom->id = $oldid;
         $zoom->timemodified = time();
         //update db with new meeting info
         $DB->update_record('zoom', $zoom);
-        
+
         // Update tracking field data for meeting.
         zoom_sync_meeting_tracking_fields($zoom->id, $response->tracking_fields ?? []);
-        
+
         zoom_calendar_item_update($zoom);
         zoom_grade_item_update($zoom);
-        
+
         return true;
-        
+
     }else{
         // The object received from mod_form.php returns instance instead of id for some reason.
         $zoom->id = $zoom->instance;
         $zoom->timemodified = time();
         $DB->update_record('zoom', $zoom);
-        
+
         $updatedzoomrecord = $DB->get_record('zoom', array('id' => $zoom->instance));
         $zoom->meeting_id = $updatedzoomrecord->meeting_id;
         $zoom->webinar = $updatedzoomrecord->webinar;
-        
+
         // Update meeting on Zoom.
         try {
             zoom_webservice()->update_meeting($zoom);
@@ -268,20 +268,21 @@ function zoom_update_instance(stdClass $zoom, mod_zoom_mod_form $mform = null) {
         } catch (moodle_exception $error) {
             return false;
         }
-        
+
         // Get the updated meeting info from zoom, before updating calendar events.
         $response = zoom_webservice()->get_meeting_webinar_info($zoom->meeting_id, $zoom->webinar);
         $zoom = populate_zoom_from_response($zoom, $response);
-        
+        $DB->update_record('zoom', $zoom);
+
         // Update tracking field data for meeting.
         zoom_sync_meeting_tracking_fields($zoom->id, $response->tracking_fields ?? []);
-        
+
         zoom_calendar_item_update($zoom);
         zoom_grade_item_update($zoom);
-        
+
         return true;
     }
-   
+
 }
 
 /**
@@ -349,7 +350,7 @@ function populate_zoom_from_response(stdClass $zoom, stdClass $response) {
 
     $newzoom = clone $zoom;
 
-    $samefields = ['start_url', 'join_url', 'created_at', 'timezone'];
+    $samefields = ['join_url', 'created_at', 'timezone'];
     foreach ($samefields as $field) {
         if (isset($response->$field)) {
             $newzoom->$field = $response->$field;
@@ -444,7 +445,7 @@ function zoom_delete_instance($id) {
     if ($zoom->exists_on_zoom == ZOOM_MEETING_EXISTS) {
         try {
             zoom_webservice()->delete_meeting($zoom->meeting_id, $zoom->webinar);
-        } catch (zoom_not_found_exception $error) {
+        } catch (\mod_zoom\not_found_exception $error) {
             // Meeting not on Zoom, so continue.
             mtrace('Meeting not on Zoom; continuing');
         }
@@ -515,7 +516,6 @@ function zoom_refresh_events($courseid, $zoom, $cm) {
  * @param bool $viewfullnames Should we display full names
  * @param int $timestart Print activity since this timestamp
  * @return boolean True if anything was printed, otherwise false
- * @todo implement this function
  */
 function zoom_print_recent_activity($course, $viewfullnames, $timestart) {
     return false;
@@ -537,7 +537,6 @@ function zoom_print_recent_activity($course, $viewfullnames, $timestart) {
  * @param int $cmid course module id
  * @param int $userid check for a particular user's activity only, defaults to 0 (all users)
  * @param int $groupid check for a particular group's activity only, defaults to 0 (all groups)
- * @todo implement this function
  */
 function zoom_get_recent_mod_activity(&$activities, &$index, $timestart, $courseid, $cmid, $userid = 0, $groupid = 0) {
 }
@@ -550,7 +549,6 @@ function zoom_get_recent_mod_activity(&$activities, &$index, $timestart, $course
  * @param bool $detail print detailed report
  * @param array $modnames as returned by get_module_types_names()
  * @param bool $viewfullnames display users' full names
- * @todo implement this function
  */
 function zoom_print_recent_mod_activity($activity, $courseid, $detail, $modnames, $viewfullnames) {
 }
@@ -562,7 +560,6 @@ function zoom_print_recent_mod_activity($activity, $courseid, $detail, $modnames
  * module uses that capability.
  *
  * @return array
- * @todo implement this function
  */
 function zoom_get_extra_capabilities() {
     return [];
@@ -622,7 +619,7 @@ function zoom_calendar_item_update(stdClass $zoom) {
 
     // Any remaining events in the array don't exist on Moodle, so create a new event.
     foreach ($newevents as $uuid => $newevent) {
-        calendar_event::create($newevent);
+        calendar_event::create($newevent, false);
     }
 }
 
@@ -662,10 +659,10 @@ function zoom_get_monthweek_options() {
  * Populate the calendar event object, based on the zoom instance
  *
  * @param stdClass $zoom The zoom instance.
- * @param stdClass $occurrence The occurrence object passed from the zoom api.
+ * @param stdClass|null $occurrence The occurrence object passed from the zoom api.
  * @return stdClass The calendar event object.
  */
-function zoom_populate_calender_item(stdClass $zoom, stdClass $occurrence = null) {
+function zoom_populate_calender_item(stdClass $zoom, ?stdClass $occurrence = null) {
     $event = new stdClass();
     $event->type = CALENDAR_EVENT_TYPE_ACTION;
     $event->modulename = 'zoom';
@@ -728,8 +725,11 @@ function zoom_calendar_item_delete(stdClass $zoom) {
  * @param int $userid User id override
  * @return \core_calendar\local\event\entities\action_interface|null
  */
-function mod_zoom_core_calendar_provide_event_action(calendar_event $event,
-                                                      \core_calendar\action_factory $factory, $userid = null) {
+function mod_zoom_core_calendar_provide_event_action(
+    calendar_event $event,
+    \core_calendar\action_factory $factory,
+    $userid = null
+) {
     global $CFG, $DB, $USER;
 
     require_once($CFG->dirroot . '/mod/zoom/locallib.php');
@@ -740,7 +740,7 @@ function mod_zoom_core_calendar_provide_event_action(calendar_event $event,
 
     $cm = get_fast_modinfo($event->courseid, $userid)->instances['zoom'][$event->instance];
     $zoom = $DB->get_record('zoom', ['id' => $cm->instance], '*');
-    list($inprogress, $available, $finished) = zoom_get_state($zoom);
+    [$inprogress, $available, $finished] = zoom_get_state($zoom);
 
     if ($finished) {
         return null; // No point to showing finished meetings in overview.
@@ -813,22 +813,20 @@ function zoom_grade_item_update(stdClass $zoom, $grades = null) {
         $grades = null;
     }
 
-    grade_update('mod/zoom', $zoom->course, 'mod', 'zoom',
-            $zoom->id, 0, $grades, $item);
+    grade_update('mod/zoom', $zoom->course, 'mod', 'zoom', $zoom->id, 0, $grades, $item);
 }
 
 /**
  * Delete grade item for given zoom instance
  *
  * @param stdClass $zoom instance object
- * @return grade_item
+ * @return int
  */
 function zoom_grade_item_delete($zoom) {
     global $CFG;
     require_once($CFG->libdir . '/gradelib.php');
 
-    return grade_update('mod/zoom', $zoom->course, 'mod', 'zoom',
-            $zoom->id, 0, null, ['deleted' => 1]);
+    return grade_update('mod/zoom', $zoom->course, 'mod', 'zoom', $zoom->id, 0, null, ['deleted' => 1]);
 }
 
 /**
@@ -911,22 +909,28 @@ function zoom_reset_userdata($data) {
 
     if (!empty($data->reset_zoom_all)) {
         // Reset tables that record user data.
-        $DB->delete_records_select('zoom_meeting_participants',
+        $DB->delete_records_select(
+            'zoom_meeting_participants',
             'detailsid IN (SELECT zmd.id
                              FROM {zoom_meeting_details} zmd
                              JOIN {zoom} z ON z.id = zmd.zoomid
-                            WHERE z.course = ?)', [$data->courseid]);
+                            WHERE z.course = ?)',
+            [$data->courseid]
+        );
         $status[] = [
             'component' => $componentstr,
             'item' => get_string('meetingparticipantsdeleted', 'zoom'),
             'error' => false,
         ];
 
-        $DB->delete_records_select('zoom_meeting_recordings_view',
+        $DB->delete_records_select(
+            'zoom_meeting_recordings_view',
             'recordingsid IN (SELECT zmr.id
                              FROM {zoom_meeting_recordings} zmr
                              JOIN {zoom} z ON z.id = zmr.zoomid
-                            WHERE z.course = ?)', [$data->courseid]);
+                            WHERE z.course = ?)',
+            [$data->courseid]
+        );
         $status[] = [
             'component' => $componentstr,
             'item' => get_string('meetingrecordingviewsdeleted', 'zoom'),
@@ -942,7 +946,7 @@ function zoom_reset_userdata($data) {
  *
  * @param object $mform the course reset form that is being built.
  */
-function zoom_reset_course_form_definition(&$mform) {
+function zoom_reset_course_form_definition($mform) {
     $mform->addElement('header', 'zoomheader', get_string('modulenameplural', 'zoom'));
 
     $mform->addElement('checkbox', 'reset_zoom_all', get_string('resetzoomsall', 'zoom'));
@@ -970,7 +974,6 @@ function zoom_reset_course_form_defaults($course) {
  * @param stdClass $cm
  * @param stdClass $context
  * @return array of [(string)filearea] => (string)description
- * @todo implement this function
  */
 function zoom_get_file_areas($course, $cm, $context) {
     return [];
@@ -992,7 +995,6 @@ function zoom_get_file_areas($course, $cm, $context) {
  * @param string $filepath
  * @param string $filename
  * @return file_info instance or null if not found
- * @todo implement this function
  */
 function zoom_get_file_info($browser, $areas, $course, $cm, $context, $filearea, $itemid, $filepath, $filename) {
     return null;
@@ -1025,7 +1027,7 @@ function zoom_pluginfile($course, $cm, $context, $filearea, array $args, $forced
 /*For Alternative Host Select */
 
 /**
- * Return a string of email address coressponding to selected 
+ * Return a string of email address coressponding to selected
  *
  * @param array $teacheremails all teachers added as alternative hosts
  * @return string of emails to append to zoom meeting
@@ -1059,7 +1061,6 @@ function zoom_update_alternative_host($teacheremails) {
  * @param stdClass $course current course record
  * @param stdClass $module current zoom instance record
  * @param cm_info $cm course module information
- * @todo implement this function
  */
 function zoom_extend_navigation(navigation_node $navref, stdClass $course, stdClass $module, cm_info $cm) {
 }
@@ -1071,10 +1072,9 @@ function zoom_extend_navigation(navigation_node $navref, stdClass $course, stdCl
  * so it is safe to rely on the $PAGE.
  *
  * @param settings_navigation $settingsnav complete settings navigation tree
- * @param navigation_node $zoomnode zoom administration node
- * @todo implement this function
+ * @param navigation_node|null $zoomnode zoom administration node
  */
-function zoom_extend_settings_navigation(settings_navigation $settingsnav, navigation_node $zoomnode = null) {
+function zoom_extend_settings_navigation(settings_navigation $settingsnav, ?navigation_node $zoomnode = null) {
 }
 
 /**
@@ -1278,7 +1278,7 @@ function zoom_build_instance_breakout_rooms_array_for_view($zoomid, $courseparti
             $roomparticipants = $courseparticipants;
             if (!empty($breakoutroom['participants'])) {
                 $participants = $breakoutroom['participants'];
-                $roomparticipants = array_map(function($roomparticipant) use ($participants) {
+                $roomparticipants = array_map(function ($roomparticipant) use ($participants) {
                     if (isset($participants[$roomparticipant['participantid']])) {
                         $roomparticipant['selected'] = true;
                     }
@@ -1290,7 +1290,7 @@ function zoom_build_instance_breakout_rooms_array_for_view($zoomid, $courseparti
             $roomgroups = $coursegroups;
             if (!empty($breakoutroom['groups'])) {
                 $groups = $breakoutroom['groups'];
-                $roomgroups = array_map(function($roomgroup) use ($groups) {
+                $roomgroups = array_map(function ($roomgroup) use ($groups) {
                     if (isset($groups[$roomgroup['groupid']])) {
                         $roomgroup['selected'] = true;
                     }
@@ -1382,8 +1382,8 @@ function zoom_get_instance_breakout_rooms($zoomid) {
 function zoom_get_coursemodule_info($coursemodule) {
     global $DB;
 
-    $dbparams = array('id' => $coursemodule->instance);
-    $fields = 'id, intro, introformat, start_time, duration';
+    $dbparams = ['id' => $coursemodule->instance];
+    $fields = 'id, intro, introformat, start_time, recurring, recurrence_type, duration';
     if (!$zoom = $DB->get_record('zoom', $dbparams, $fields)) {
         return false;
     }
@@ -1404,6 +1404,10 @@ function zoom_get_coursemodule_info($coursemodule) {
         $result->customdata['duration'] = $zoom->duration;
     }
 
+    // Skip the if condition for recurring and recurrence_type, the values of NULL and 0 are needed in other functions.
+    $result->customdata['recurring'] = $zoom->recurring;
+    $result->customdata['recurrence_type'] = $zoom->recurrence_type;
+
     return $result;
 }
 
@@ -1420,14 +1424,14 @@ function zoom_cm_info_dynamic(cm_info $cm) {
     require_once($CFG->dirroot . '/mod/zoom/locallib.php');
 
     if (method_exists($cm, 'override_customdata')) {
-        $moduleinstance = $DB->get_record('zoom', array('id' => $cm->instance), '*', MUST_EXIST);
+        $moduleinstance = $DB->get_record('zoom', ['id' => $cm->instance], '*', MUST_EXIST);
 
         // Get meeting state from Zoom.
-        list($inprogress, $available, $finished) = zoom_get_state($moduleinstance);
+        [$inprogress, $available, $finished] = zoom_get_state($moduleinstance);
 
         // For unfinished meetings, override start_time with the next occurrence.
         // If this is a recurring meeting without fixed time, do not override - it will set start_time = 0.
-        if (!$finished && $moduleinstance->recurrence_type != 0) {
+        if (!$finished && $moduleinstance->recurrence_type != ZOOM_RECURRINGTYPE_NOTIME) {
             $cm->override_customdata('start_time', zoom_get_next_occurrence($moduleinstance));
         }
     }
