@@ -127,7 +127,6 @@ $string['err_end_date'] = 'Recurrence end date cannot be in the past';
 $string['err_end_date_before_start'] = 'Recurrence end date cannot be before start date';
 $string['err_invalid_password'] = 'Passcode contains invalid characters.';
 $string['err_long_timeframe'] = 'Requested time frame too long, showing results of latest month in range.';
-$string['err_long_timeframe'] = 'Requested time frame too long, showing results of latest month in range.';
 $string['err_password'] = 'Passcode may only contain the following characters: [a-z A-Z 0-9 @ - _ *]. Max of 10 characters.';
 $string['err_password_required'] = 'Passcode is required.';
 $string['err_repeat_monthly_interval'] = 'Max interval for monthly meeting is 3 months';

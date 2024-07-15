@@ -287,10 +287,8 @@ function zoom_get_sessions_for_display($zoomid) {
 function zoom_get_next_occurrence($zoom) {
     global $DB;
 
-    /**
-     * Prepare an ad-hoc request cache as this function could be called multiple times throughout a request.
-     * and we want to avoid to make duplicate DB calls.
-     */
+    // Prepare an ad-hoc request cache as this function could be called multiple times throughout a request.
+    // We want to avoid to make duplicate DB calls.
     $cacheoptions = [
         'simplekeys' => true,
         'simpledata' => true,
@@ -503,11 +501,11 @@ function zoom_get_participants_report($detailsid) {
 function zoom_get_course_instructors($courseid) {
     global $DB;
 
-    $role = $DB->get_record('role', array('shortname' => 'editingteacher'));
+    $role = $DB->get_record('role', ['shortname' => 'editingteacher']);
     $context = context_course::instance($courseid);
     $teachers = get_role_users($role->id, $context);
 
-    $teachersmenu = array();
+    $teachersmenu = [];
     if ($teachers) {
         foreach ($teachers as $teacher) {
 
@@ -545,15 +543,14 @@ function zoom_get_user_role($id){
 
     global $DB;
 
-    $rolestr = array();
+    $rolestr = [];
 
     $roleassignments = $DB->get_records_sql("
       SELECT ra.roleid
       FROM {role_assignments} ra
       WHERE ra.userid = ".$id.";");
 
-    foreach($roleassignments as $role){
-
+    foreach ($roleassignments as $role) {
         $rolename = $DB->get_record('role', ['id' => $role->roleid]);
         $rolestr[] = $rolename->shortname;
     }
@@ -567,9 +564,9 @@ function zoom_get_user_role($id){
 * @param int $email of user
 * @param user object
 */
-function zoom_email_check($email){
+function zoom_email_check($email) {
 
-    $split = explode('@',$email);
+    $split = explode('@', $email);
 
     if (ZOOM_USER_DOMAIN == $split[1]) {
         return true;
@@ -579,12 +576,12 @@ function zoom_email_check($email){
     }
 }
 
-/**ADDED
+/** ADDED
 * Check if user has any alias emails connected to account
 * @param int $email of user
 * @param user object
 */
-function zoom_email_alias($user,$service){
+function zoom_email_alias($user, $service) {
 
     global $DB;
 
@@ -1434,10 +1431,10 @@ function zoom_get_registrant_join_url($useremail, $meetingid, $iswebinar) {
 * @param int $email of user
 * @param user object
 */
-function zoom_get_user_info($email){
+function zoom_get_user_info($email) {
     global $DB;
 
-    $user = $DB->get_record('user', array('email' => $email), '*', IGNORE_MISSING);
+    $user = $DB->get_record('user', ['email' => $email], '*', IGNORE_MISSING);
     $emailchk = explode('@',$email);
 
 	if (!$user) {
@@ -1450,7 +1447,7 @@ function zoom_get_user_info($email){
             $uainfo = $DB->get_record_sql($sql, [], IGNORE_MISSING);
 
             if ($uainfo) {
-                $user = $DB->get_record('user', array('id' => $uainfo->userid), '*', IGNORE_MISSING);
+                $user = $DB->get_record('user', ['id' => $uainfo->userid], '*', IGNORE_MISSING);
             }
         }
 	}
