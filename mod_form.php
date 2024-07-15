@@ -188,7 +188,7 @@ class mod_zoom_mod_form extends moodleform_mod {
             }
             $select = $mform->addElement('select', 'assign', get_string('assign', 'zoom'), $teachersmenu);
             // Need to set current host here.
-            if(!$isnew) {
+            if (!$isnew) {
                 $zoomusers = [];
                 foreach ($teacherarray as $teacher) {
                     // Not amazing may have to reconsider if we end up hitting the timeout limit for zoom requests.
@@ -1207,7 +1207,7 @@ class mod_zoom_mod_form extends moodleform_mod {
         // UOFR HACK ADDED.
         if (isset($data['assign'])) {
             $useremail = $data['assign'];
-            if($useremail != $USER->email) {
+            if ($useremail != $USER->email) {
                 $user = zoom_get_user_info($useremail);
                 if ($user) {
                     $service = new mod_zoom_webservice();
