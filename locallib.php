@@ -287,8 +287,10 @@ function zoom_get_sessions_for_display($zoomid) {
 function zoom_get_next_occurrence($zoom) {
     global $DB;
 
-    // Prepare an ad-hoc request cache as this function could be called multiple times throughout a request
-    // and we want to avoid to make duplicate DB calls.
+    /**
+     * Prepare an ad-hoc request cache as this function could be called multiple times throughout a request.
+     * and we want to avoid to make duplicate DB calls.
+     */
     $cacheoptions = [
         'simplekeys' => true,
         'simpledata' => true,
@@ -356,11 +358,11 @@ function zoom_get_state($zoom) {
         $starttime = $zoom->start_time;
     }
 
-    // Calculate the time when the recurring meeting becomes available next,
+    // Calculate the time when the recurring meeting becomes available next.
     // based on the next occurrence start time and the general meeting lead time.
     $firstavailable = $starttime - ($config->firstabletojoin * 60);
 
-    // Calculate the time when the meeting ends to be available,
+    // Calculate the time when the meeting ends to be available.
     // based on the next occurrence start time and the meeting duration.
     $lastavailable = $starttime + $zoom->duration;
 
@@ -370,11 +372,11 @@ function zoom_get_state($zoom) {
     // Determine if its a recurring meeting with no fixed time.
     $isrecurringnotime = $zoom->recurring && $zoom->recurrence_type == ZOOM_RECURRINGTYPE_NOTIME;
 
-    // Determine if the meeting is available,
+    // Determine if the meeting is available.
     // based on the fact if it is recurring or in progress.
     $available = $isrecurringnotime || $inprogress;
 
-    // Determine if the meeting is finished,
+    // Determine if the meeting is finished.
     // based on the fact if it is recurring or the meeting end time is still in the future.
     $finished = !$isrecurringnotime && $now > $lastavailable;
 
@@ -492,7 +494,7 @@ function zoom_get_participants_report($detailsid) {
     return $participants;
 }
 
-//Added for new co-host feature
+// Added for new co-host feature.
 /**
  * Get all instructors for a course
  * @param string $detailsid The meeting ID that you want to get the participants report for.
@@ -509,17 +511,17 @@ function zoom_get_course_instructors($courseid) {
     if ($teachers) {
         foreach ($teachers as $teacher) {
 
-            $teacherarray=new stdClass;
+            $teacherarray = new stdClass;
 
             $sql = 'SELECT * FROM {user_info_field} uif WHERE shortname = "zoomemail" ';
             $uafield = $DB->get_record_sql($sql, [], IGNORE_MISSING);
 
             $teacherarray->email = $teacher->email;
 
-            if($uafield){
+            if ($uafield) {
                 $sql = 'SELECT * FROM {user_info_data} uif WHERE fieldid = "'.$uafield->id.'" AND userid = '.$teacher->id;
                 $uainfo = $DB->get_record_sql($sql, [], IGNORE_MISSING);
-                if($uainfo && $uainfo->data!=""){
+                if ($uainfo && $uainfo->data != "") {
                     $teacherarray->email = $uainfo->data;
                 }
             }
@@ -533,7 +535,7 @@ function zoom_get_course_instructors($courseid) {
 
 
 
-//Added for account creation checks
+// Added for account creation checks.
 /**
 * Get role of user
 * @param int $email of user
@@ -553,7 +555,7 @@ function zoom_get_user_role($id){
     foreach($roleassignments as $role){
 
         $rolename = $DB->get_record('role', ['id' => $role->roleid]);
-        $rolestr[]=$rolename->shortname;
+        $rolestr[] = $rolename->shortname;
     }
 
     return $rolestr;
@@ -569,10 +571,12 @@ function zoom_email_check($email){
 
     $split = explode('@',$email);
 
-    if(ZOOM_USER_DOMAIN == $split[1])
+    if (ZOOM_USER_DOMAIN == $split[1]) {
         return true;
-    else
+    }
+    else {
         return false;
+    }
 }
 
 /**ADDED
@@ -584,15 +588,15 @@ function zoom_email_alias($user,$service){
 
     global $DB;
 
-    //check alternative email first
+    // Check alternative email first.
     $sql = 'SELECT * FROM {user_info_field} uif WHERE shortname = "zoomemail" ';
     $uafield = $DB->get_record_sql($sql, [], IGNORE_MISSING);
 
-    if($uafield){
+    if ($uafield) {
         $sql = 'SELECT * FROM {user_info_data} uif WHERE fieldid = "'.$uafield->id.'" AND userid = '.$user->id;
         $uainfo = $DB->get_record_sql($sql, [], IGNORE_MISSING);
-        if($uainfo){
-            if($uainfo->data != "" || $uainfo->data != false){
+        if ($uainfo) {
+            if ($uainfo->data != "" || $uainfo->data != false) {
                 $zoomuser = $service->get_user($uainfo->data);
                 return $zoomuser;
             }
@@ -601,7 +605,7 @@ function zoom_email_alias($user,$service){
     $zoomuser = $service->get_user($user->email);
     return $zoomuser;
 }
-//END of ADDED
+// END of ADDED.
 
 /**
  * Creates a default passcode from the user's Zoom meeting security settings.
@@ -693,16 +697,14 @@ function zoom_get_selectable_alternative_hosts_list(context $context) {
 
     // Iterate over selectable alternative host users.
     foreach ($users as $u) {
-        // Note: Basically, if this is the user's own data row, the data row should be skipped.
-        // But this would then not cover the case when a user is scheduling the meeting _for_ another user
-        // and wants to be an alternative host himself.
-        // As this would have to be handled at runtime in the browser, we just offer all users with the
-        // capability as selectable and leave this aspect as possible improvement for the future.
-        // At least, Zoom does not care if the user who is the host adds himself as alternative host as well.
-
-        // Verify that the user really has a Zoom account.
-        // Furthermore, verify that the user's status is active. Adding a pending or inactive user as alternative host will result
-        // in a Zoom API error otherwise.
+        /**
+        Note: Basically, if this is the user's own data row, the data row should be skipped.
+        But this would then not cover the case when a user is scheduling the meeting _for_ another user and wants to be an alternative host himself.
+        As this would have to be handled at runtime in the browser, we just offer all users with the capability as selectable and leave this aspect as possible improvement for the future.
+        At least, Zoom does not care if the user who is the host adds himself as alternative host as well.
+        Verify that the user really has a Zoom account.
+        Furthermore, verify that the user's status is active. Adding a pending or inactive user as alternative host will result in a Zoom API error otherwise.
+         */
         $zoomuser = zoom_get_user($u->email);
         if ($zoomuser !== false && $zoomuser->status === 'active') {
             // Add user to array of users.
@@ -1426,7 +1428,7 @@ function zoom_get_registrant_join_url($useremail, $meetingid, $iswebinar) {
     return false;
 }
 
-//UOFR HACK Added for new co-host feature
+// UOFR HACK Added for new co-host feature.
 /**
 * Get user from db *this forces that all alternative hosts must be in moodle instance
 * @param int $email of user
@@ -1439,21 +1441,21 @@ function zoom_get_user_info($email){
     $emailchk = explode('@',$email);
 
 	if (!$user) {
-        //check if it is the alternate zoom email
+        // Check if it is the alternate zoom email.
         $sql = 'SELECT * FROM {user_info_field} uif WHERE shortname = "zoomemail" ';
         $uafield = $DB->get_record_sql($sql, [], IGNORE_MISSING);
 
-        if($uafield){
+        if ($uafield) {
             $sql = 'SELECT * FROM {user_info_data} uif WHERE fieldid = "'.$uafield->id.'" AND data = "'.$email.'"';
             $uainfo = $DB->get_record_sql($sql, [], IGNORE_MISSING);
 
-            if($uainfo){
+            if ($uainfo) {
                 $user = $DB->get_record('user', array('id' => $uainfo->userid), '*', IGNORE_MISSING);
             }
         }
 	}
     return $user;
-}//END OF ADDED
+} // END OF ADDED.
 
 /**
  * Get the display name for a Zoom user.
