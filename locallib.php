@@ -569,8 +569,7 @@ function zoom_email_check($email) {
 
     if (ZOOM_USER_DOMAIN == $split[1]) {
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
@@ -695,12 +694,15 @@ function zoom_get_selectable_alternative_hosts_list(context $context) {
     foreach ($users as $u) {
         /**
         Note: Basically, if this is the user's own data row, the data row should be skipped.
-        But this would then not cover the case when a user is scheduling the meeting _for_ another user and wants to be an alternative host himself.
-        As this would have to be handled at runtime in the browser, we just offer all users with the capability as selectable and leave this aspect as possible improvement for the future.
+        But this would then not cover the case when a user is scheduling the meeting
+        _for_ another user and wants to be an alternative host himself.
+        As this would have to be handled at runtime in the browser, we just offer all users with the capability as selectable
+        and leave this aspect as possible improvement for the future.
         At least, Zoom does not care if the user who is the host adds himself as alternative host as well.
         Verify that the user really has a Zoom account.
-        Furthermore, verify that the user's status is active. Adding a pending or inactive user as alternative host will result in a Zoom API error otherwise.
-         */
+        Furthermore, verify that the user's status is active.
+        Adding a pending or inactive user as alternative host will result in a Zoom API error otherwise.
+        */
         $zoomuser = zoom_get_user($u->email);
         if ($zoomuser !== false && $zoomuser->status === 'active') {
             // Add user to array of users.
@@ -1436,7 +1438,7 @@ function zoom_get_user_info($email) {
     $user = $DB->get_record('user', ['email' => $email], '*', IGNORE_MISSING);
     $emailchk = explode('@', $email);
 
-	if (!$user) {
+    if (!$user) {
         // Check if it is the alternate zoom email.
         $sql = 'SELECT * FROM {user_info_field} uif WHERE shortname = "zoomemail" ';
         $uafield = $DB->get_record_sql($sql, [], IGNORE_MISSING);
@@ -1449,7 +1451,7 @@ function zoom_get_user_info($email) {
                 $user = $DB->get_record('user', ['id' => $uainfo->userid], '*', IGNORE_MISSING);
             }
         }
-	}
+    }
     return $user;
 } // END OF ADDED.
 
