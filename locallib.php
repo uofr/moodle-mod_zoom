@@ -535,12 +535,11 @@ function zoom_get_course_instructors($courseid) {
 
 // Added for account creation checks.
 /**
-* Get role of user
-* @param int $email of user
-* @param user object
-*/
-function zoom_get_user_role($id){
-
+ * Get role of user
+ * @param int $email of user
+ * @param user object
+ */
+function zoom_get_user_role($id) {
     global $DB;
 
     $rolestr = [];
@@ -560,10 +559,10 @@ function zoom_get_user_role($id){
 
 
 /**
-* Check if email is in same domain
-* @param int $email of user
-* @param user object
-*/
+ * Check if email is in same domain
+ * @param int $email of user
+ * @param user object
+ */
 function zoom_email_check($email) {
 
     $split = explode('@', $email);
@@ -577,10 +576,10 @@ function zoom_email_check($email) {
 }
 
 /** ADDED
-* Check if user has any alias emails connected to account
-* @param int $email of user
-* @param user object
-*/
+ * Check if user has any alias emails connected to account
+ * @param int $email of user
+ * @param user object
+ */
 function zoom_email_alias($user, $service) {
 
     global $DB;
@@ -1427,15 +1426,15 @@ function zoom_get_registrant_join_url($useremail, $meetingid, $iswebinar) {
 
 // UOFR HACK Added for new co-host feature.
 /**
-* Get user from db *this forces that all alternative hosts must be in moodle instance
-* @param int $email of user
-* @param user object
-*/
+ * Get user from db *this forces that all alternative hosts must be in moodle instance
+ * @param int $email of user
+ * @param user object
+ */
 function zoom_get_user_info($email) {
     global $DB;
 
     $user = $DB->get_record('user', ['email' => $email], '*', IGNORE_MISSING);
-    $emailchk = explode('@',$email);
+    $emailchk = explode('@', $email);
 
 	if (!$user) {
         // Check if it is the alternate zoom email.
