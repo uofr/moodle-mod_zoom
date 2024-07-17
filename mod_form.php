@@ -63,7 +63,7 @@ class mod_zoom_mod_form extends moodleform_mod {
 
         $isnew = empty($this->_cm);
 
-        $service = new mod_zoom_webservice();
+        $service = new \mod_zoom\webservice();
         // UofR HACK ADDED.
         $zoomuser = zoom_email_alias($USER, $service);
         // END of ADDED.
