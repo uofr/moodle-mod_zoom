@@ -99,6 +99,8 @@ if ($zoom->exists_on_zoom == ZOOM_MEETING_EXPIRED) {
  * @return ?string
  */
 function zoom_get_user_display_name($zoomuserid) {
+    global $USER, $DB;
+   
     try {
         $hostuser = zoom_get_user($zoomuserid);
 
@@ -106,12 +108,27 @@ function zoom_get_user_display_name($zoomuserid) {
         $hostmoodleuser = new stdClass();
         $hostmoodleuser->firstname = $hostuser->first_name;
         $hostmoodleuser->lastname = $hostuser->last_name;
+
+         /**
+             * Joel Dapiawen
+             * July 30, 2024
+             * If Zoom account first name & last name returns empty, use the First name and Last name record in the database.
+         */
+        if (empty($hostmoodleuser->firstname) && empty($hostmoodleuser->lastname)) {
+            $hostrecord = $DB->get_record('user', array('email' => $hostuser->email));
+            if ($hostrecord) {
+                $hostmoodleuser->firstname = $hostrecord->firstname;
+                $hostmoodleuser->lastname = $hostrecord->lastname;
+            } 
+        }
         $hostmoodleuser->alternatename = '';
         $hostmoodleuser->firstnamephonetic = '';
         $hostmoodleuser->lastnamephonetic = '';
         $hostmoodleuser->middlename = '';
-
+        
         return fullname($hostmoodleuser);
+     
+                    
     } catch (moodle_exception $error) {
         return null;
     }
