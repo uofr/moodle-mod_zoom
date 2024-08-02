@@ -191,133 +191,134 @@ class mod_zoom_mod_form extends moodleform_mod {
           /**
              * Joel Dapiawen
              * February 12, 2024
-             * Update July 4, 2024
+             * Update Aug 2, 2024
              * Try to format the email address of the user to the expected format and add it to the dropdown menu
              * Select the host who owns the meeting when editing the Zoom meeting.
              */
-        if (has_capability('mod/zoom:assign', $context)) {
-            $teacherarray = zoom_get_course_instructors($this->_course->id);
-        
-            $teachersmenu = array();
-            $alert_messages = array();
-            $current_user_alert = '';
-        
-            foreach ($teacherarray as $teacher) {
-                $teacher_email_lower = strtolower($teacher->email);
-                $zoom_user = zoom_webservice()->get_user($teacher_email_lower);
-            
-                if ($zoom_user) {
-                    $teachersmenu[$teacher_email_lower] = $teacher->name;
-                    $name_parts = explode(' ', $teacher->name);
-            
-                    if (count($name_parts) >= 2) {
-                        $first_name = strtolower(array_shift($name_parts));
-                        $last_name = strtolower(implode('', $name_parts));
-            
-                        // Construct expected email format
-                        $expected_email = $first_name . '.' . $last_name . '@uregina.ca';
-            
-                        // Do not send alert message if the email address is acceptable like nickname.lname@uregina.ca or sample+urt00@uregina.ca
-                        if ($teacher_email_lower !== $expected_email && !preg_match('/^[a-z]+\.[a-z]+.*|^[a-z]+\+.*@uregina\.ca$/m', $teacher_email_lower)) {
-                            // Add alert message if email does not match the expected format
-                            $message = "The email address ({$teacher_email_lower}) appears to be incorrectly formatted. It should be in the format: {$expected_email}. To avoid any future issues please contact IT support.";
-                            $alert_messages[] = $message;
-                            if ($teacher_email_lower == $USER->email) {
-                                $current_user_alert = $message;
+            if (has_capability('mod/zoom:assign', $context)) {
+                $teacherarray = zoom_get_course_instructors($this->_course->id);
+                $teachersmenu = array();
+                $alert_messages = array();
+                $current_user_alert = '';
+                
+                foreach ($teacherarray as $teacher) {
+                    $teacher_email_lower = strtolower($teacher->email);
+                    $zoom_user = zoom_webservice()->get_user($teacher_email_lower);
+                
+                    if ($zoom_user) {
+                        $teachersmenu[$teacher_email_lower] = $teacher->name;
+                        $name_parts = explode(' ', $teacher->name);
+                
+                        if (count($name_parts) >= 2) {
+                            // Concatenate all parts of the first name
+                            $first_name = strtolower(implode('', array_slice($name_parts, 0, -1)));
+                            $last_name = strtolower(end($name_parts));
+                
+                            // Construct expected email format
+                            $expected_email = $first_name . '.' . $last_name . '@uregina.ca';
+                
+                            // Do not send alert message if the email address is acceptable like nickname.lname@uregina.ca or sample+urt00@uregina.ca
+                            if ($teacher_email_lower !== $expected_email && !preg_match('/^[a-z]+\.[a-z]+.*|^[a-z]+\+.*@uregina\.ca$/m', $teacher_email_lower)) {
+                                // Add alert message if email does not match the expected format
+                                $message = "The email address ({$teacher_email_lower}) appears to be incorrectly formatted. It should be in the format: {$expected_email}. To avoid any future issues please contact IT support.";
+                                $alert_messages[] = $message;
+                               // if ($teacher_email_lower == $USER->email) {
+                                  //  $current_user_alert = $message;
+                              //  }
+                            }
+                        } else {
+                            // Handle case where the name has fewer than two parts (likely a single name)
+                            $corrected_email = strtolower($teacher->name) . '@uregina.ca';
+                            if ($teacher_email_lower !== $corrected_email) {
+                                // Add to teachers menu
+                                $teachersmenu[$corrected_email] = $teacher->name;
                             }
                         }
                     } else {
-                        // Handle case where the name has fewer than two parts (likely a single name)
-                        $corrected_email = strtolower($teacher->name) . '@uregina.ca';
-                        if ($teacher_email_lower !== $corrected_email) {
-                            // Add to teachers menu
-                            $teachersmenu[$corrected_email] = $teacher->name;
-                        }
-                    }
-                } else {
-                    $name_parts = explode(' ', $teacher->name);
-            
-                    if (count($name_parts) >= 2) {
-                        $first_name = strtolower(array_shift($name_parts));
-                        $last_name = strtolower(implode('', $name_parts));
-            
-                        // Construct the expected email address format
-                        $expected_email = $first_name . '.' . $last_name . '@uregina.ca';
-            
-                        // Try to get the zoom user with the expected email
-                        $zoom_user = zoom_webservice()->get_user($expected_email);
-            
-                        // Check if the Zoom user can be found with the corrected email format
-                        if ($zoom_user) {
-                            // Add the teacher to the dropdown menu
-                            $teachersmenu[$expected_email] = $teacher->name;
-            
-                            // Check if the original email matches the expected format
-                            if ($teacher_email_lower !== $expected_email) {
-                                // Add alert message
-                                $message = "The email address ({$teacher_email_lower}) appears to be incorrectly formatted. It should be in the format: {$expected_email}. To avoid any future issues please contact IT support.";
+                        $name_parts = explode(' ', $teacher->name);
+                
+                        if (count($name_parts) >= 2) {
+                            // Concatenate all parts of the first name
+                            $first_name = strtolower(implode('', array_slice($name_parts, 0, -1)));
+                            $last_name = strtolower(end($name_parts));
+                
+                            // Construct the expected email address format
+                            $expected_email = $first_name . '.' . $last_name . '@uregina.ca';
+                
+                            // Try to get the zoom user with the expected email
+                            $zoom_user = zoom_webservice()->get_user($expected_email);
+                
+                            // Check if the Zoom user can be found with the corrected email format
+                            if ($zoom_user) {
+                                // Add the teacher to the dropdown menu
+                                $teachersmenu[$expected_email] = $teacher->name;
+                
+                                // Check if the original email matches the expected format
+                                if ($teacher_email_lower !== $expected_email) {
+                                    // Add alert message
+                                    $message = "The email address ({$teacher_email_lower}) appears to be incorrectly formatted. It should be in the format: {$expected_email}. To avoid any future issues please contact IT support.";
+                                    $alert_messages[] = $message;
+                                   // if ($teacher_email_lower == $USER->email) {
+                                      //  $current_user_alert = $message;
+                                   // }
+                                }
+                            } else {
+                                // Zoom user not found, display the cannot be found message
+                                $a = 'https://uregina-ca.zoom.us';
+                                $message = "Unable to find your account ({$teacher->name}) on Zoom. If you are using Zoom for the first time, you must activate your Zoom account by logging into <a href=\"{$a}\" target=\"_blank\">{$a}</a>. Once you have activated your Zoom account, reload this page and continue setting up your meeting. Otherwise, make sure your email on Zoom matches your email on this system.";
                                 $alert_messages[] = $message;
                                 if ($teacher_email_lower == $USER->email) {
                                     $current_user_alert = $message;
                                 }
                             }
                         } else {
-                            // Zoom user not found, display the cannot be found message
-                            $a = 'https://uregina-ca.zoom.us';
-                            $message = "Unable to find your account ({$teacher->name}) on Zoom. If you are using Zoom for the first time, you must activate your Zoom account by logging into <a href=\"{$a}\" target=\"_blank\">{$a}</a>. Once you have activated your Zoom account, reload this page and continue setting up your meeting. Otherwise, make sure your email on Zoom matches your email on this system.";
-                            $alert_messages[] = $message;
-                            if ($teacher_email_lower == $USER->email) {
-                                $current_user_alert = $message;
+                            // Handle case where the name has fewer than two parts (likely a single name)
+                            $corrected_email = strtolower($teacher->name) . '@uregina.ca';
+                            if ($teacher_email_lower !== $corrected_email) {
+                                // Add to teachers menu
+                                $teachersmenu[$corrected_email] = $teacher->name;
                             }
                         }
-                    } else {
-                        // Handle case where the name has fewer than two parts (likely a single name)
-                        $corrected_email = strtolower($teacher->name) . '@uregina.ca';
-                        if ($teacher_email_lower !== $corrected_email) {
-                            // Add to teachers menu
-                            $teachersmenu[$corrected_email] = $teacher->name;
-                        }
+                    }
+                }
+                
+                $alert_html = '';
+                if (has_capability('moodle/site:config', $context) || has_capability('moodle/site:doanything', $context)) {
+                    foreach ($alert_messages as $message) {
+                        $alert_html .= "<div class='alert alert-warning alert-dismissible fade show' role='alert'>
+                                {$message}
+                                <button type='button' class='close' data-dismiss='alert' aria-label='Close'>
+                                <span aria-hidden='true'>&times;</span>
+                              </button>
+                              </div>";
+                    }
+                } else {
+                    if (!empty($current_user_alert)) {
+                        $alert_html .= "<div class='alert alert-warning alert-dismissible fade show' role='alert'>
+                                {$current_user_alert}
+                                <button type='button' class='close' data-dismiss='alert' aria-label='Close'>
+                                <span aria-hidden='true'>&times;</span>
+                              </button>
+                              </div>";
+                    }
+                }
+                
+                if (!empty($alert_html)) {
+                    $mform->addElement('html', $alert_html);
+                }
+                
+                $select = $mform->addElement('select', 'assign', get_string('assign', 'zoom'), $teachersmenu);
+                
+                $zoomuser = zoom_webservice()->get_user($this->current->host_id);
+                
+                if ($zoomuser) {
+                    if (!$isnew) {
+                        $select->setSelected(strtolower($zoomuser->email));
                     }
                 }
             }
             
             
-        
-            $alert_html = '';
-            if (has_capability('moodle/site:config', $context) || has_capability('moodle/site:doanything', $context)) {
-                foreach ($alert_messages as $message) {
-                    $alert_html .= "<div class='alert alert-warning alert-dismissible fade show' role='alert'>
-                            {$message}
-                            <button type='button' class='close' data-dismiss='alert' aria-label='Close'>
-                            <span aria-hidden='true'>&times;</span>
-                          </button>
-                          </div>";
-                }
-            } else {
-                if (!empty($current_user_alert)) {
-                    $alert_html .= "<div class='alert alert-warning alert-dismissible fade show' role='alert'>
-                            {$current_user_alert}
-                            <button type='button' class='close' data-dismiss='alert' aria-label='Close'>
-                            <span aria-hidden='true'>&times;</span>
-                          </button>
-                          </div>";
-                }
-            }
-        
-            if (!empty($alert_html)) {
-                $mform->addElement('html', $alert_html);
-            }
-        
-            $select = $mform->addElement('select', 'assign', get_string('assign', 'zoom'), $teachersmenu);
-        
-            $zoomuser = zoom_webservice()->get_user($this->current->host_id);
-        
-            if ($zoomuser) {
-                if (!$isnew) {
-                    $select->setSelected(strtolower($zoomuser->email));
-                }
-            }
-        }
         
         
         
