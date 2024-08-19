@@ -90,49 +90,6 @@ if ($zoom->exists_on_zoom == ZOOM_MEETING_EXPIRED) {
     }
 }
 
-/**
- * Get the display name for a Zoom user.
- * This is wrapped in a function to avoid unnecessary API calls.
- *
- * @package mod_zoom
- * @param string $zoomuserid Zoom user ID.
- * @return ?string
- */
-function zoom_get_user_display_name($zoomuserid) {
-    global $USER, $DB;
-   
-    try {
-        $hostuser = zoom_get_user($zoomuserid);
-
-        // Compose Moodle user object for host.
-        $hostmoodleuser = new stdClass();
-        $hostmoodleuser->firstname = $hostuser->first_name;
-        $hostmoodleuser->lastname = $hostuser->last_name;
-
-         /**
-             * Joel Dapiawen
-             * July 30, 2024
-             * If Zoom account first name & last name returns empty, use the First name and Last name record in the database.
-         */
-        if (empty($hostmoodleuser->firstname) && empty($hostmoodleuser->lastname)) {
-            $hostrecord = $DB->get_record('user', array('email' => $hostuser->email));
-            if ($hostrecord) {
-                $hostmoodleuser->firstname = $hostrecord->firstname;
-                $hostmoodleuser->lastname = $hostrecord->lastname;
-            } 
-        }
-        $hostmoodleuser->alternatename = '';
-        $hostmoodleuser->firstnamephonetic = '';
-        $hostmoodleuser->lastnamephonetic = '';
-        $hostmoodleuser->middlename = '';
-        
-        return fullname($hostmoodleuser);
-     
-                    
-    } catch (moodle_exception $error) {
-        return null;
-    }
-}
 
 $isrecurringnotime = ($zoom->recurring && $zoom->recurrence_type == ZOOM_RECURRINGTYPE_NOTIME);
 
