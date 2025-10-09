@@ -63,6 +63,7 @@ final class error_handling_test extends basic_testcase {
         global $CFG;
         parent::setUpBeforeClass();
         require_once($CFG->dirroot . '/mod/zoom/locallib.php');
+        parent::setUpBeforeClass();
     }
 
     /**

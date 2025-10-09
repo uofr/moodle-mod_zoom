@@ -58,6 +58,7 @@ final class mod_zoom_grade_test extends advanced_testcase {
         parent::setUpBeforeClass();
         require_once($CFG->dirroot . '/mod/zoom/lib.php');
         require_once($CFG->dirroot . '/mod/zoom/locallib.php');
+        parent::setUpBeforeClass();
     }
 
     /**

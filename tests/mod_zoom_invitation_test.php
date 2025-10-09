@@ -42,6 +42,7 @@ final class mod_zoom_invitation_test extends advanced_testcase {
         global $CFG;
         parent::setUpBeforeClass();
         require_once($CFG->libdir . '/accesslib.php');
+        parent::setUpBeforeClass();
     }
 
     /**
