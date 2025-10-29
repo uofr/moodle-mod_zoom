@@ -121,8 +121,10 @@ foreach ($zooms as $z) {
         $row[0] = get_section_name($course, $cm->sectionnum);
     }
 
+		$visibility_class = $z->visible ? '' : 'dimmed'; // hidden zoom modules are dimmed
+
     $url = new moodle_url('view.php', ['id' => $cm->id]);
-    $row[1] = html_writer::link($url, $cm->get_formatted_name());
+    $row[1] = html_writer::link($url, $cm->get_formatted_name(), array('class' => $visibility_class));
     if ($z->webinar) {
         $row[1] .= " ($strwebinar)";
     }
