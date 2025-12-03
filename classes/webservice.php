@@ -1014,7 +1014,19 @@ class webservice {
         $instances = $this->make_paginated_call($url, [], ($webinar ? 'webinars' : 'meetings'));
         return $instances;
     }
-
+/**
+ * List all meetings for a user.
+ *
+ * @param string $userid The user whose meetings to retrieve.
+ * @return array An array of meeting information.
+ */
+public function list_meetings_user($userid) {
+    // Classic: meeting:read:admin.
+    // Granular: meeting:read:list_meetings:admin.
+    $url = 'users/' . $userid . '/meetings';
+    $instances = $this->make_paginated_call($url, [], 'meetings');
+    return $instances;
+}
     /**
      * Get the participants who attended a meeting
      * @param string $meetinguuid The meeting or webinar's UUID.
@@ -1210,6 +1222,27 @@ class webservice {
 
         return $recordings;
     }
+public function create_user($email, $firstname, $lastname, $type = 2) {
+    $url = 'users';
+    $data = [
+        'action' => 'create',
+        'user_info' => [
+            'email' => (string)$email,
+            'type' => (int)$type,
+            'first_name' => (string)$firstname,
+            'last_name'  => (string)$lastname
+        ]
+    ];
+
+    try {
+        // Encode as JSON string for make_call().
+        return $this->make_call('post', $url, json_encode($data));
+    } catch (\Exception $e) {
+        debugging("Zoom API create_user error: " . $e->getMessage(), DEBUG_DEVELOPER);
+        return false;
+    }
+}
+
 
     /**
      * Retrieves the list of cloud recordings for a user within a given date range from Zoom.
@@ -1225,10 +1258,8 @@ class webservice {
      * @throws moodle_exception If no recordings are found or if an API error occurs.
      */
     public function get_user_recording_list($zoomMails, $datefrom, $dateto) {
-        $meetingid = $this->encode_uuid($zoomMails);
-        $url = 'users/' . $zoomMails . '/recordings';
-        $settingsurl = 'users/' . $zoomMails . '/recordings/?page_size=30&mc=false&trash=false&from=' . $datefrom . "&to=" . $dateto;
-        $allowedrecordingtypes = ['MP4', 'M4A'];
+        $userid = $this->encode_uuid($zoomMails);
+        $settingsurl = 'users/' . $userid . '/recordings?page_size=30&mc=false&trash=false&from=' . $datefrom . '&to=' . $dateto;
         $recordings = new stdClass();
         try {
             //$response = $this->make_call($url);
@@ -1255,15 +1286,15 @@ class webservice {
      * checking whether the recording is allowed to be downloaded and if a password is set.
      * Joel Dapiawen: Update October 9, 2024
      * 
-     * @param string $meeting_id The UUID of the Zoom meeting.
+     * @param string $meeting_uuid The UUID of the Zoom meeting.
      * @return string|bool Returns a message indicating whether the recording can be downloaded or false if not allowed.
      * @throws moodle_exception If an error occurs while fetching the meeting's recording settings.
      */
-    public function get_user_meeting_recording($meeting_id) {
-        $meetingid = $this->encode_uuid($meeting_id);
-        $url = 'meetings/' . $meeting_id . '/recordings';
-        $settingsurl = 'meetings/' . $meeting_id . '/recordings/settings';
+    public function get_user_meeting_recording($meeting_uuid) {
+        $uuid = $this->encode_uuid($meeting_uuid);
 
+        $url = 'meetings/' . $uuid . '/recordings';
+        $settingsurl = 'meetings/' . $uuid . '/recordings/settings';
         $result = ''; 
         try {
             $response = $this->make_call($settingsurl);
@@ -1273,12 +1304,16 @@ class webservice {
                 $result = false; 
             } else {
                 // If download is allowed, return a confirmation message.
-                $result = "<p>This recording is allowed to be downloaded</p>";
+                $result = '<div class="alert alert-success" role="alert">
+                    This recording is allowed to be downloaded.
+                </div>';
             }
             
         } catch (moodle_exception $error) {
             // Handle any API errors or missing recordings.
-            $result = 'Error: No recordings found or unable to fetch settings for this meeting.';
+            $result = '<div class="alert alert-warning" role="alert">
+                    Error: No recordings found or unable to fetch settings for this meeting.
+                </div>';
         }
         
         return $result; // Return the result message or false if download is not allowed.
@@ -1291,12 +1326,12 @@ class webservice {
      * and removing any existing password requirement.
      * Joel Dapiawen: Update October 9, 2024
      * 
-     * @param string $meeting_id The UUID of the Zoom meeting.
+     * @param string $meeting_uuid The UUID of the Zoom meeting.
      * @return string Returns a success or failure message based on the outcome of the request.
      * @throws moodle_exception If an error occurs while updating the recording settings.
      */
-    public function grant_access_to_recording($meeting_id) {
-        $settingsurl = 'meetings/' . $this->encode_uuid($meeting_id) . '/recordings/settings';
+    public function grant_access_to_recording($meeting_uuid) {
+        $settingsurl = 'meetings/' . $this->encode_uuid($meeting_uuid) . '/recordings/settings';
 
         // Data to patch: setting viewer_download to true and removing the password
         $data = array(
