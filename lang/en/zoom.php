@@ -484,3 +484,4 @@ $string['zoomerr_usernotfound'] = 'Unable to find your account on Zoom. If you a
 $string['zoomerr_viewrecordings_off'] = 'View Recordings is switched off, task cannot run';
 $string['zoomurl'] = 'Zoom home page URL';
 $string['zoomurl_desc'] = '';
+$string['zoom:assign'] = 'Assign';
