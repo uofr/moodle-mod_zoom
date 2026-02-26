@@ -1646,4 +1646,10 @@ class webservice {
         }
         return false;
     }
+
+    public function videomanagement_get_user_videos() {
+        global $USER;
+
+        return $this->make_call('video_management/videos?user_id=' . $USER->email);
+    }
 }
