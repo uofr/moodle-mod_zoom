@@ -1,5 +1,40 @@
 ### Releases ###
 
+#### v5.4.5 ####
+
+- Bugfix: Case-insensitive comparisons for alternative host emails #677
+- Hardening: Verify zoomid when toggling recording visibility #681
+- CI: add Moodle 5.1 checks #679
+
+#### v5.4.4 ####
+
+- Hardening: Shell arguments should always be escaped #671 (thanks @OshratLuski, @nadavkav)
+
+#### v5.4.3 ####
+
+- Bugfix: Rename string to avoid flawed database upgrade step #668 (thanks @samwitzig)
+
+#### v5.4.2 ####
+
+- Bugfix: Fix SQL compatibility in upgrade step #664 (thanks @izendegi, @SimonThornett)
+
+#### v5.4.1 ####
+
+- Bugfix: Fix stringid capitalization in upgrade step #659 (thanks @Ethan-DevIT)
+- Bugfix: Dashboard API was not working for get_meeting_reports #662 (thanks @Caspiofri)
+- Code quality: Apply moodle-cs for line wrapping in send_ical_notifications
+
+#### v5.4.0 ####
+
+- Feature: Send iCal Notifications #623 (thanks @paulandm, @OpenCollabZA)
+  - New setting `zoom/sendicalnotifications`
+  - New message `mod_zoom/ical_notifications`
+  - New table `zoom_ical_notifications`
+  - New task `mod_zoom\task\send_ical_notifications`
+- Bugfix: Create Zoom user webservice method used outdated action. #655 (thanks @yedidiaklein)
+- Bugfix: Detailed error messages when editing activities #656 (thanks @Chatharina)
+- Code quality: Check Moodle 5.0 #654
+
 #### v5.3.1 ####
 
 - Regression: Tracking fields task missing variable #648 (thanks @lorenzogreco, @phette23, @izendegi)

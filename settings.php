@@ -392,6 +392,22 @@ if ($ADMIN->fulltree) {
     );
     $settings->add($offerdownloadical);
 
+    $sendicalnotificationshelp = get_string('sendicalnotifications_help', 'mod_zoom');
+    if (empty($CFG->allowattachments)) {
+        $sendicalnotificationshelp .= '<div class="alert alert-block alert-warning" role="alert">'
+                                      . get_string('sendicalnotifications_warning', 'mod_zoom') . '</div>';
+    }
+
+    $sendicalnotifications = new admin_setting_configcheckbox(
+        'zoom/sendicalnotifications',
+        get_string('sendicalnotifications', 'mod_zoom'),
+        $sendicalnotificationshelp,
+        0,
+        1,
+        0
+    );
+    $settings->add($sendicalnotifications);
+
     // Default Zoom settings.
     $settings->add(new admin_setting_heading(
         'zoom/defaultsettings',
@@ -578,6 +594,17 @@ if ($ADMIN->fulltree) {
     );
     $defaulttrackingfields->set_updatedcallback('mod_zoom_update_tracking_fields');
     $settings->add($defaulttrackingfields);
+
+    // Adding setting for pre-assigned breakout rooms.
+    $preassignbreakoutrooms = new admin_setting_configcheckbox(
+        'zoom/preassignbreakoutrooms',
+        get_string('setting_breakoutroom', 'mod_zoom'),
+        get_string('setting_breakoutroom_help', 'mod_zoom'),
+        1,
+        1,
+        0
+    );
+    $settings->add($preassignbreakoutrooms);
 
     $invitationregexhelp = get_string('invitationregex_help', 'mod_zoom');
     if (!$moodlehashideif) {

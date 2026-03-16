@@ -314,7 +314,7 @@ class webservice {
                         if ($header['x-ratelimit-remaining'] == 0 && !empty($retryafter)) {
                             set_config('retry-after', $retryafter, 'zoom');
                             throw new api_limit_exception($response->message, $response->code, $retryafter);
-                        } else if (!(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
+                        } else if (!((defined('PHPUNIT_TEST') && PHPUNIT_TEST) || (defined('BEHAT_TEST') && BEHAT_TEST))) {
                             // When running CLI we might want to know how many calls remaining.
                             debugging('x-ratelimit-remaining = ' . $header['x-ratelimit-remaining']);
                         }
@@ -322,7 +322,7 @@ class webservice {
 
                     debugging('Received 429 response, sleeping ' . strval($timediff) .
                             ' seconds until next retry. Current retry: ' . $this->makecallretries);
-                    if ($timediff > 0 && !(defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
+                    if ($timediff > 0 && !((defined('PHPUNIT_TEST') && PHPUNIT_TEST) || (defined('BEHAT_TEST') && BEHAT_TEST))) {
                         sleep($timediff);
                     }
                     return $this->make_call($path, $data, $method);
@@ -385,17 +385,19 @@ class webservice {
      * Autocreate a user on Zoom.
      *
      * @param stdClass $user The user to create.
+     * @param string $action The account create action: create, autoCreate, custCreate or ssoCreate.
+     * @param int $type The user type number.
      * @return bool Whether the user was succesfully created.
-     * @deprecated Has never been used by internal code.
+     * @see https://github.com/yedidiaklein/moodle-local_zoomsyncusers An external plugin that depends on mod_zoom uses this method.
      */
-    public function autocreate_user($user) {
+    public function autocreate_user($user, $action = 'autoCreate', $type = ZOOM_USER_TYPE_PRO) {
         // Classic: user:write:admin.
         // Granular: user:write:user:admin.
         $url = 'users';
-        $data = ['action' => 'autocreate'];
+        $data = ['action' => $action];
         $data['user_info'] = [
             'email' => zoom_get_api_identifier($user),
-            'type' => ZOOM_USER_TYPE_PRO,
+            'type' => $type,
             'first_name' => $user->firstname,
             'last_name' => $user->lastname,
             'password' => base64_encode(random_bytes(16)),
@@ -788,10 +790,12 @@ class webservice {
 
         $data['tracking_fields'] = $tfarray;
 
-        if (isset($zoom->breakoutrooms)) {
+        if (get_config('zoom', 'preassignbreakoutrooms') && isset($zoom->breakoutrooms)) {
             $breakoutroom = ['enable' => true, 'rooms' => $zoom->breakoutrooms];
-            $data['settings']['breakout_room'] = $breakoutroom;
+        } else {
+            $breakoutroom = ['enable' => false];
         }
+        $data['settings']['breakout_room'] = $breakoutroom;
 
         return $data;
     }
@@ -1041,15 +1045,19 @@ class webservice {
 
         if ($this->has_scope($reportscopes)) {
             $apitype = 'report';
+            $data = [];
         } else if ($this->has_scope($dashboardscopes)) {
             $apitype = 'metrics';
+            $data = [
+                'type' => 'past',
+            ];
         } else {
             mtrace('Missing OAuth scopes required for reports.');
             return [];
         }
 
         $url = $apitype . '/' . $meetingtype . '/' . $meetinguuid . '/participants';
-        return $this->make_paginated_call($url, [], 'participants');
+        return $this->make_paginated_call($url, $data, 'participants');
     }
 
     /**
