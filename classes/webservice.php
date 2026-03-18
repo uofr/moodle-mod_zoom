@@ -1689,4 +1689,8 @@ public function create_user($email, $firstname, $lastname, $type = 2) {
 
         return $this->make_call('video_management/videos?user_id=' . $USER->email);
     }
+
+    public function clips_get_clip($clipid) {
+        return $this->make_call('/clips/' . $clipid);
+    }
 }
