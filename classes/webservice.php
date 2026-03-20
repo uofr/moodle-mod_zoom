@@ -183,6 +183,9 @@ class webservice {
      * @return stdClass The call's result.
      */
     protected function make_curl_call(&$curl, $method, $url, $data) {
+        if ($method == 'delete') {
+            return $curl->$method($url, $data, ['CURLOPT_POSTFIELDS' => $data]);
+        }
         return $curl->$method($url, $data);
     }
 
@@ -252,6 +255,10 @@ class webservice {
         if ($method != 'get') {
             $curl->setHeader('Content-Type: application/json');
             $data = is_array($data) ? json_encode($data) : $data;
+        }
+
+        if ($method == 'delete') {
+            $curl->setopt(['CURLOPT_POSTFIELDS' => $data]);
         }
 
         $attempts = 0;
@@ -1687,10 +1694,67 @@ public function create_user($email, $firstname, $lastname, $type = 2) {
     public function videomanagement_get_user_videos() {
         global $USER;
 
-        return $this->make_call('video_management/videos?user_id=' . $USER->email);
+        $user = $this->get_user($USER->email);
+        if (!$user) {
+            throw new moodle_exception('error_nozoomaccount', 'assignsubmission_zoom', $USER->email);
+        }
+
+        return $this->make_call('video_management/videos?user_id=' . $user->id);
+    }
+
+    public function videomanagement_create_channel($channelowneremail, $name, $categories, $description) {
+        $user = $this->get_user($channelowneremail);
+        $postdata = [
+            'name' => $name,
+            'categories' => $categories,
+            'description' => $description
+        ];
+
+        return $this->make_call('/video_management/channels?user_id=' . $user->id, $postdata, 'post');
+    }
+
+    public function videomanagement_add_video_to_channel($videoid, $channelid) {
+        $postdata = [
+            'videos' => [
+                ['video_id' => $videoid]
+            ]
+        ];
+
+        try {
+            return $this->make_call('/video_management/channels/' . $channelid . '/videos', $postdata, 'post');
+        }
+        catch (moodle_exception $error) {
+            throw new moodle_exception('erroraddchannelvideo', 'mod_zoom', '', $error->getMessage());
+        }
+    }
+
+    public function videomanagement_remove_video_from_channel($videoid, $channelid) {
+        $postdata = [
+            'videos' => [
+                ['video_id' => $videoid]
+            ]
+        ];
+
+        return $this->make_call('video_management/channels/' . $channelid . '/videos', $postdata, 'delete');
     }
 
     public function clips_get_clip($clipid) {
         return $this->make_call('/clips/' . $clipid);
+    }
+
+    public function clips_transfer_video($sourceuserid, $destinationuserid, $videoid) {
+        $postdata = [
+            'source_owner_user_id' => $sourceuserid,
+            'clip_id_list' => [$videoid],
+            'target_owner_user_id' => $destinationuserid,
+            'transfer_type' => 'PARTIAL_TRANSFER'
+        ];
+
+        try {
+            return $this->make_call('/clips/transfers', $postdata, 'post');
+        }
+        catch (moodle_exception $exception) {
+            throw new moodle_exception('errorcliptransfer', 'mod_zoom', '', $exception->getMessage());
+        }
     }
 }
