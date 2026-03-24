@@ -1735,7 +1735,12 @@ public function create_user($email, $firstname, $lastname, $type = 2) {
             ]
         ];
 
-        return $this->make_call('video_management/channels/' . $channelid . '/videos', $postdata, 'delete');
+        try {
+            return $this->make_call('video_management/channels/' . $channelid . '/videos', $postdata, 'delete');
+        }
+        catch (moodle_exception $exception) {
+            throw new moodle_exception('errorremovechannelvideo', 'mod_zoom', '', $exception->getMessage());
+        }
     }
 
     public function clips_get_clip($clipid) {
