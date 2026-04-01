@@ -1762,4 +1762,12 @@ public function create_user($email, $firstname, $lastname, $type = 2) {
             throw new moodle_exception('errorcliptransfer', 'mod_zoom', '', $exception->getMessage());
         }
     }
+
+    public function clips_download_to_file($clipid, $fileinfo) {
+        $url = $this->apiurl . 'clips/' . $clipid . '/download';
+        $token = $this->get_access_token();
+
+        $fs = get_file_storage();
+        return $fs->create_file_from_url($fileinfo, $url, ['headers' => ['Authorization: Bearer ' . $token]]);
+    }
 }
