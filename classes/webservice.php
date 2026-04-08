@@ -1702,15 +1702,59 @@ public function create_user($email, $firstname, $lastname, $type = 2) {
         return $this->make_call('video_management/videos?user_id=' . $user->id);
     }
 
-    public function videomanagement_create_channel($channelowneremail, $name, $categories, $description) {
-        $user = $this->get_user($channelowneremail);
+    public function create_course_channel($course, $zoom_courseownerid) {
+        global $DB;
+
+        $customfieldid = get_config('mod_zoomvideo', 'channelcustomfield');
+        if ($customfieldid == 0) {
+            throw new moodle_exception('errorchannelcustomfieldnotset', 'mod_zoomvideo');
+        }
+
+        $context = \context_course::instance($course->id);
+
+        $channelname = $course->shortname;
+        $channeldesc = "Videos for {$course->shortname}.";
+        $channelcategories = [];
+
+        $customfield_data = $DB->get_record('customfield_data', ['fieldid' => $customfieldid, 'instanceid' => $course->id]);
+        if (!$customfield_data || $customfield_data->charvalue === '') {
+            $zoom_newchannel = $this->videomanagement_create_channel($zoom_courseownerid, $channelname, $channelcategories, $channeldesc);
+
+            if (!$customfield_data) {
+                $customfieldcontroller = \customfield_zoomchannel\field_controller::create($customfieldid);
+                $customfielddatacontroller = \customfield_zoomchannel\data_controller::create(0, field: $customfieldcontroller);
+                $customfielddatacontroller->set('contextid', $context->id);
+                $customfielddatacontroller->set('instanceid', $course->id);
+            } else {
+                $customfielddatacontroller = \customfield_zoomchannel\data_controller::create(0, $customfield_data);
+            }
+
+            $customfielddatacontroller->set('value', $zoom_newchannel->channel_id);
+            $customfielddatacontroller->set($customfielddatacontroller->datafield(), $zoom_newchannel->channel_id);
+            $customfielddatacontroller->save();
+
+            return $zoom_newchannel;
+        }
+
+        return false;
+    }
+
+    public function videomanagement_create_channel($channelownerid, $name, $categories, $description) {
         $postdata = [
             'name' => $name,
             'categories' => $categories,
             'description' => $description
         ];
 
-        return $this->make_call('/video_management/channels?user_id=' . $user->id, $postdata, 'post');
+        return $this->make_call('/video_management/channels?user_id=' . $channelownerid, $postdata, 'post');
+    }
+
+    public function videomanagement_get_channel($channelid) {
+        return $this->make_call('video_management/channels/' . $channelid);
+    }
+
+    public function videomanagement_list_channel_videos($channelid) {
+        return $this->make_call('video_management/channels/' . $channelid . '/videos');
     }
 
     public function videomanagement_add_video_to_channel($videoid, $channelid) {
@@ -1718,6 +1762,19 @@ public function create_user($email, $firstname, $lastname, $type = 2) {
             'videos' => [
                 ['video_id' => $videoid]
             ]
+        ];
+
+        try {
+            return $this->make_call('/video_management/channels/' . $channelid . '/videos', $postdata, 'post');
+        }
+        catch (moodle_exception $error) {
+            throw new moodle_exception('erroraddchannelvideo', 'mod_zoom', '', $error->getMessage());
+        }
+    }
+
+    public function videomanagement_add_videos_to_channel($videos, $channelid) {
+        $postdata = [
+            'videos' => $videos
         ];
 
         try {
@@ -1741,6 +1798,51 @@ public function create_user($email, $firstname, $lastname, $type = 2) {
         catch (moodle_exception $exception) {
             throw new moodle_exception('errorremovechannelvideo', 'mod_zoom', '', $exception->getMessage());
         }
+    }
+
+    /**
+     * Create channel permissions.
+     * @param string $channelid Zoom channel id.
+     * @param array $permissions [{"role": "VIEWER", "user_id": "325bde9e82c84a179ac0f612f7688df7"}, ...]
+     * @return stdClass
+     */
+    public function create_channel_permissions($channelid, $permissions) {
+        $postdata = ['permissions' => $permissions];
+
+        return $this->make_call('video_management/channels/' . $channelid . '/permissions', $postdata, 'post');
+    }
+
+    /**
+     * Delete channel permissions.
+     * @param string $channelid Zoom channel id.
+     * @param array $permissions [{"role": "VIEWER", "user_id": "325bde9e82c84a179ac0f612f7688df7"}, ...]
+     * @return stdClass
+     */
+    public function delete_channel_permissions($channelid, $permissions) {
+        $postdata = ['permissions' => $permissions];
+
+        return $this->make_call('video_management/channels/' . $channelid . '/permissions', $postdata, 'delete');
+    }
+
+    /**
+     * Update channel permissions.
+     * @param string $channelid Zoom channel id.
+     * @param array $permissions [{"role": "VIEWER", "user_id": "325bde9e82c84a179ac0f612f7688df7"}, ...]
+     * @return stdClass
+     */
+    public function update_channel_permissions($channelid, $permissions) {
+        $postdata = ['permissions' => $permissions];
+
+        return $this->make_call('video_management/channels/' . $channelid . '/permissions', $postdata, 'patch');
+    }
+
+    /**
+     * List channel permissions.
+     * @param string $channelid Zoom channel id.
+     * @return stdClass
+     */
+    public function videomanagement_list_channel_permissions($channelid) {
+        return $this->make_call('video_management/channels/' . $channelid . '/permissions');
     }
 
     public function clips_get_clip($clipid) {
