@@ -242,7 +242,7 @@ class webservice {
      * @return stdClass The call's result in JSON format.
      * @throws moodle_exception Moodle exception is thrown for curl errors.
      */
-    private function make_call($path, $data = [], $method = 'get') {
+    protected function make_call($path, $data = [], $method = 'get') {
         $url = $this->apiurl . $path;
         $method = strtolower($method);
 
