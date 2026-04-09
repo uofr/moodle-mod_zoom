@@ -1691,17 +1691,6 @@ public function create_user($email, $firstname, $lastname, $type = 2) {
         return false;
     }
 
-    public function videomanagement_get_user_videos() {
-        global $USER;
-
-        $user = $this->get_user($USER->email);
-        if (!$user) {
-            throw new moodle_exception('error_nozoomaccount', 'assignsubmission_zoom', $USER->email);
-        }
-
-        return $this->make_call('video_management/videos?user_id=' . $user->id);
-    }
-
     public function create_course_channel($course, $zoom_courseownerid) {
         global $DB;
 
