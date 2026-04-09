@@ -1757,21 +1757,6 @@ public function create_user($email, $firstname, $lastname, $type = 2) {
         return $this->make_call('video_management/channels/' . $channelid . '/videos');
     }
 
-    public function videomanagement_add_video_to_channel($videoid, $channelid) {
-        $postdata = [
-            'videos' => [
-                ['video_id' => $videoid]
-            ]
-        ];
-
-        try {
-            return $this->make_call('/video_management/channels/' . $channelid . '/videos', $postdata, 'post');
-        }
-        catch (moodle_exception $error) {
-            throw new moodle_exception('erroraddchannelvideo', 'mod_zoom', '', $error->getMessage());
-        }
-    }
-
     public function videomanagement_add_videos_to_channel($videos, $channelid) {
         $postdata = [
             'videos' => $videos
@@ -1782,21 +1767,6 @@ public function create_user($email, $firstname, $lastname, $type = 2) {
         }
         catch (moodle_exception $error) {
             throw new moodle_exception('erroraddchannelvideo', 'mod_zoom', '', $error->getMessage());
-        }
-    }
-
-    public function videomanagement_remove_video_from_channel($videoid, $channelid) {
-        $postdata = [
-            'videos' => [
-                ['video_id' => $videoid]
-            ]
-        ];
-
-        try {
-            return $this->make_call('video_management/channels/' . $channelid . '/videos', $postdata, 'delete');
-        }
-        catch (moodle_exception $exception) {
-            throw new moodle_exception('errorremovechannelvideo', 'mod_zoom', '', $exception->getMessage());
         }
     }
 
@@ -1825,44 +1795,12 @@ public function create_user($email, $firstname, $lastname, $type = 2) {
     }
 
     /**
-     * Update channel permissions.
-     * @param string $channelid Zoom channel id.
-     * @param array $permissions [{"role": "VIEWER", "user_id": "325bde9e82c84a179ac0f612f7688df7"}, ...]
-     * @return stdClass
-     */
-    public function update_channel_permissions($channelid, $permissions) {
-        $postdata = ['permissions' => $permissions];
-
-        return $this->make_call('video_management/channels/' . $channelid . '/permissions', $postdata, 'patch');
-    }
-
-    /**
      * List channel permissions.
      * @param string $channelid Zoom channel id.
      * @return stdClass
      */
     public function videomanagement_list_channel_permissions($channelid) {
         return $this->make_call('video_management/channels/' . $channelid . '/permissions');
-    }
-
-    public function clips_get_clip($clipid) {
-        return $this->make_call('/clips/' . $clipid);
-    }
-
-    public function clips_transfer_video($sourceuserid, $destinationuserid, $videoid) {
-        $postdata = [
-            'source_owner_user_id' => $sourceuserid,
-            'clip_id_list' => [$videoid],
-            'target_owner_user_id' => $destinationuserid,
-            'transfer_type' => 'PARTIAL_TRANSFER'
-        ];
-
-        try {
-            return $this->make_call('/clips/transfers', $postdata, 'post');
-        }
-        catch (moodle_exception $exception) {
-            throw new moodle_exception('errorcliptransfer', 'mod_zoom', '', $exception->getMessage());
-        }
     }
 
     public function clips_download_to_file($clipid, $fileinfo) {
