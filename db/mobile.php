@@ -22,14 +22,14 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die;
+defined('MOODLE_INTERNAL') || die();
 
 $addons = [
     "mod_zoom" => [
         "handlers" => [
             'zoommeetingdetails' => [
                 'displaydata' => [
-                'title' => 'pluginname',
+                    'title' => 'pluginname',
                     'icon' => $CFG->wwwroot . '/mod/zoom/pix/icon.gif',
                     'class' => '',
                 ],
