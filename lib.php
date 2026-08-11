@@ -198,11 +198,17 @@ function zoom_update_instance(stdClass $zoom, ?mod_zoom_mod_form $mform = null) 
     $DB->update_record('zoom', $zoom);
 
     $zoom->breakoutrooms = [];
+    /* Condition removed so that it will clear all of the breakout rooms if they are all deleted on the page
     if (!empty($zoom->rooms)) {
         $breakoutrooms = zoom_build_instance_breakout_rooms_array_for_api($zoom);
         zoom_update_instance_breakout_rooms($zoom->id, $breakoutrooms['db']);
         $zoom->breakoutrooms = $breakoutrooms['zoom'];
     }
+    */
+		$breakoutrooms = zoom_build_instance_breakout_rooms_array_for_api($zoom);
+		zoom_update_instance_breakout_rooms($zoom->id, $breakoutrooms['db']);
+		$zoom->breakoutrooms = $breakoutrooms['zoom'];
+    
 
     $updatedzoomrecord = $DB->get_record('zoom', ['id' => $zoom->id]);
     $zoom->meeting_id = $updatedzoomrecord->meeting_id;

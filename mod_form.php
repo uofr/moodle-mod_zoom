@@ -533,7 +533,8 @@ class mod_zoom_mod_form extends moodleform_mod {
             // Getting Course participants.
             $courseparticipants = [];
             foreach ($participants as $participant) {
-                $courseparticipants[] = ['participantid' => $participant->id, 'participantemail' => $participant->email];
+								$participantname = $participant->firstname . ' ' . $participant->lastname;
+                $courseparticipants[] = ['participantid' => $participant->id, 'participantemail' => $participant->email, 'participantname' => $participantname];
             }
 
             // Getting Course groups.
@@ -560,7 +561,6 @@ class mod_zoom_mod_form extends moodleform_mod {
                 $templatedata['rooms'] = $rooms;
                 $templatedata['roomscount'] = count($rooms);
             }
-
             $mform->addElement('html', $OUTPUT->render_from_template('zoom/breakoutrooms_rooms', $templatedata));
         }
 
