@@ -137,10 +137,9 @@ define('ZOOM_USER_DOMAIN', 'uregina.ca');
  * @param mixed $a Extra words and phrases that might be required in the error string
  */
 function zoom_fatal_error($errorcode, $module = '', $continuelink = '', $a = null) {
-    global $CFG, $COURSE, $OUTPUT, $PAGE;
+    global $COURSE, $OUTPUT, $PAGE;
 
     $output = '';
-    $obbuffer = '';
 
     // Assumes that function is run before output is generated.
     if ($OUTPUT->has_started()) {
@@ -148,7 +147,7 @@ function zoom_fatal_error($errorcode, $module = '', $continuelink = '', $a = nul
         throw new moodle_exception($errorcode, $module, $continuelink, $a);
     }
 
-    $PAGE->set_heading($COURSE->fullname);
+    $PAGE->set_heading(format_string($COURSE->fullname));
     $output .= $OUTPUT->header();
 
     // Output message without messing with HTML content of error.
@@ -157,22 +156,6 @@ function zoom_fatal_error($errorcode, $module = '', $continuelink = '', $a = nul
 	$warnstate = ($errorcode=='zoomerr_usernotfound') ? 'warning' : 'danger';
 	
     $output .= $OUTPUT->box($message, 'errorbox alert alert-'.$warnstate, null, ['data-rel' => 'fatalerror']);
-
-    if ($CFG->debugdeveloper) {
-        if (!empty($debuginfo)) {
-            $debuginfo = s($debuginfo); // Removes all nasty JS.
-            $debuginfo = str_replace("\n", '<br />', $debuginfo); // Keep newlines.
-            $output .= $OUTPUT->notification('<strong>Debug info:</strong> ' . $debuginfo, 'notifytiny');
-        }
-
-        if (!empty($backtrace)) {
-            $output .= $OUTPUT->notification('<strong>Stack trace:</strong> ' . format_backtrace($backtrace), 'notifytiny');
-        }
-
-        if ($obbuffer !== '') {
-            $output .= $OUTPUT->notification('<strong>Output buffer:</strong> ' . s($obbuffer), 'notifytiny');
-        }
-    }
 
     if (!empty($continuelink)) {
         $output .= $OUTPUT->continue_button($continuelink);
@@ -276,7 +259,7 @@ function zoom_get_sessions_for_display($zoomid) {
         $sessions[$uuid]['topic'] = $instance->topic;
         $sessions[$uuid]['duration'] = $instance->duration;
         $sessions[$uuid]['starttime'] = userdate($instance->start_time, $format);
-        $sessions[$uuid]['endtime'] = userdate($instance->start_time + $instance->duration * 60, $format);
+        $sessions[$uuid]['endtime'] = userdate($instance->start_time + $instance->duration, $format);
     }
 
     return $sessions;
@@ -687,7 +670,7 @@ function zoom_email_alias($user){
  */
 function zoom_create_default_passcode($meetingpasswordrequirement) {
     $length = max($meetingpasswordrequirement->length, 6);
-    $random = rand(0, pow(10, $length) - 1);
+    $random = random_int(0, (int) pow(10, $length) - 1);
     $passcode = str_pad(strval($random), $length, '0', STR_PAD_LEFT);
 
     // Get a random set of indexes to replace with non-numberic values.
@@ -696,14 +679,14 @@ function zoom_create_default_passcode($meetingpasswordrequirement) {
 
     if ($meetingpasswordrequirement->have_letter || $meetingpasswordrequirement->have_upper_and_lower_characters) {
         // Random letter from A-Z.
-        $passcode[$indexes[0]] = chr(rand(65, 90));
+        $passcode[$indexes[0]] = chr(random_int(65, 90));
         // Random letter from a-z.
-        $passcode[$indexes[1]] = chr(rand(97, 122));
+        $passcode[$indexes[1]] = chr(random_int(97, 122));
     }
 
     if ($meetingpasswordrequirement->have_special_character) {
         $specialchar = '@_*-';
-        $passcode[$indexes[2]] = substr(str_shuffle($specialchar), 0, 1);
+        $passcode[$indexes[2]] = $specialchar[random_int(0, strlen($specialchar) - 1)];
     }
 
     return $passcode;
@@ -1473,11 +1456,10 @@ function zoom_get_user_settings($identifier) {
  *
  * @param string $meetingid Zoom meeting ID.
  * @param bool $iswebinar If the session is a webinar.
- * @return stdClass Returns a Zoom object containing the registrants (if found).
+ * @return array Returns the registrants for the meeting or webinar (if found).
  */
 function zoom_get_meeting_registrants($meetingid, $iswebinar) {
-    $response = zoom_webservice()->get_meeting_registrants($meetingid, $iswebinar);
-    return $response;
+    return zoom_webservice()->get_meeting_registrants($meetingid, $iswebinar);
 }
 
 /**
@@ -1502,12 +1484,10 @@ function zoom_is_user_registered_for_meeting($useremail, $meetingid, $iswebinar)
  * @return string|false Returns the join url for the user (based on email address) for the specified meeting (if found).
  */
 function zoom_get_registrant_join_url($useremail, $meetingid, $iswebinar) {
-    $response = zoom_get_meeting_registrants($meetingid, $iswebinar);
-    if (isset($response->registrants)) {
-        foreach ($response->registrants as $registrant) {
-            if (strcasecmp($useremail, $registrant->email) == 0) {
-                return $registrant->join_url;
-            }
+    $registrants = zoom_get_meeting_registrants($meetingid, $iswebinar);
+    foreach ($registrants as $registrant) {
+        if (strcasecmp($useremail, $registrant->email) == 0) {
+            return $registrant->join_url;
         }
     }
 

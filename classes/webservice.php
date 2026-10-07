@@ -218,6 +218,11 @@ class webservice {
         // Create $curl, which implicitly uses the proxy settings from $CFG.
         $curl = new curl();
 
+        // Verify the peer certificate to mitigate MITM attacks.
+        $curl->setopt([
+            'CURLOPT_SSL_VERIFYPEER' => true,
+        ]);
+
         if (!empty($proxyhost)) {
             // Restore the stored global proxy settings from above.
             $CFG->proxyhost = $cfg->proxyhost;
@@ -959,9 +964,6 @@ class webservice {
      * @return \mod_zoom\invitation The meeting's invitation.
      */
     public function get_meeting_invitation($zoom) {
-        global $CFG;
-        require_once($CFG->dirroot . '/mod/zoom/classes/invitation.php');
-
         // Webinar does not have meeting invite info.
         if ($zoom->webinar) {
             return new invitation(null);
@@ -1629,7 +1631,7 @@ class webservice {
      *
      * @param string $id The meeting_id or webinar_id of the meeting or webinar to retrieve.
      * @param bool $webinar Whether the meeting or webinar whose information you want is a webinar.
-     * @return stdClass The meeting's or webinar's information.
+     * @return array The meeting's or webinar's registrants.
      */
     public function get_meeting_registrants($id, $webinar) {
         // Classic: meeting:read:admin.
@@ -1637,8 +1639,7 @@ class webservice {
         // Classic: webinar:read:admin.
         // Granular: webinar:read:list_registrants:admin.
         $url = ($webinar ? 'webinars/' : 'meetings/') . $id . '/registrants';
-        $response = $this->make_call($url);
-        return $response;
+        return $this->make_paginated_call($url, [], 'registrants');
     }
 
     /**
